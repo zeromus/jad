@@ -1,0 +1,36 @@
+The JAD/JAC format is designed for use with the JAD library.
+It is designed to be simple and compact for embedded platforms.
+Consequently the storage is not as compact as it could be.
+All values are little endian.
+
+TODO - use sha or md5? sha256 is 32B.. md5 is 16B.. sha1 is 20B.. supposedly md5 is fast. maybe use the one with small code
+TODO - consider baking in an offset to the sector data. will be convenient for hex editors and simple tools.
+
+== JADJAC format ==
+
+Every JAD or JAC file begins this way.
+
+ofs | type       | comment
+000 | char[8]    | magic ASCII word "JADJAC!\0".
+008 | u32        | version
+00C | u32        | flags 
+                   | flags:0 - JAC subformat
+010 | u32        | numSectors
+014 | u32        | numTocEntries
+018 | u32        | reserved for entire file CRC, as needed
+01C | u32        | reserved
+020 | u8[N*12]   | The N TOC entries. Could be a nearly arbitrary amount, but may commonly be 102
+
+After that comes sector data or index
+
+== JAD subformat ==
+
+
+===================================================
+library structure
+
+The library does not do any independent memory allocation or file IO. These are handled through the jadStream and jadAllocator interfaces.
+
+known dependencies: 
+- stdint.h
+- stdio.h
