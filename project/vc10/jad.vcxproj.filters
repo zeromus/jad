@@ -3,13 +3,39 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\jad.h" />
     <ClInclude Include="..\..\src\jadstd.h" />
+    <ClInclude Include="..\..\src\heatshrink\heatshrink_config.h">
+      <Filter>heatshrink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\heatshrink\heatshrink_decoder.h">
+      <Filter>heatshrink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\heatshrink\heatshrink_encoder.h">
+      <Filter>heatshrink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\heatshrink\heatshrink_common.h">
+      <Filter>heatshrink</Filter>
+    </ClInclude>
+    <ClInclude Include="stdbool.h" />
+    <ClInclude Include="..\..\src\jadcodec_heatshrink.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\jadstd.c" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\jad.c" />
+    <ClCompile Include="..\..\src\heatshrink\heatshrink_decoder.c">
+      <Filter>heatshrink</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\heatshrink\heatsink_encoder.c">
+      <Filter>heatshrink</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\jadcodec_heatshrink.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\jad.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="heatshrink">
+      <UniqueIdentifier>{016154e2-80c7-40cb-9a3e-bcf33133b38c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@
 //TODO - decide what we even need in the first place
 //TODO - maybe split all the jadUtil into another file, or maybe theyre all for jadTool, or maybe they should be named jadTool etc.
 //TODO - jadContext API for reading out the TOC? for handling redundancies and boiling down to 100? we dont wnat to forcibly store the whole thing in memory
+//TODO - divide codecs from streams? i thought maybe by combining them we could support both streamed and buffered scenarios... but i dont know.
 
 #include <stdint.h>
 
@@ -16,10 +17,14 @@ extern "C" {
 typedef int jadError;
 
 #define JAD_OK 0
-#define JAD_ERROR -1
+#define JAD_EOF -1
+#define JAD_ERROR -2
 
 //type forward declarations
-struct jadStream;
+typedef struct jadSubchannelQ jadSubchannelQ;
+typedef struct jadStream jadStream;
+typedef struct jadContext jadContext;
+typedef struct jadAllocator jadAllocator;
 typedef uint8_t jadBCD2;
 
 enum jadEnumControlQ
@@ -52,13 +57,22 @@ enum jadFlags
 };
 
 //the read callback for a jadStream
-typedef int (*jadStreamRead)(void* buffer, size_t bytes, struct jadStream* stream);
+typedef int (*jadStreamRead)(void* buffer, size_t bytes, jadStream* stream);
 
 //the write callback for a jadStream
-typedef int (*jadStreamWrite)(const void* buffer, size_t bytes, struct jadStream* stream);
+typedef int (*jadStreamWrite)(const void* buffer, size_t bytes, jadStream* stream);
 
 //the seek callback for a jadStream. like fseek, but returns ftell. (0,SEEK_CUR) should work as ftell
-typedef long (*jadStreamSeek)(struct jadStream* stream, long offset, int origin);
+typedef long (*jadStreamSeek)(jadStream* stream, long offset, int origin);
+
+//the codec get callback for a jadStream, like getc, but no provision for ferror is provided
+typedef int (*jadStreamGet)(jadStream* stream);
+
+//the codec put callback for a jadStream, like putc, but no provision for ferror is provided
+typedef int (*jadStreamPut)(jadStream* stream, uint8_t val);
+
+//just used for codec flushing
+typedef int (*jadStreamFlush)(jadStream* stream);
 
 //in case we need it
 typedef void* (*jadAllocatorAlloc)(int amt, int alignment);
@@ -71,6 +85,9 @@ struct jadStream
 	jadStreamRead read;
 	jadStreamWrite write;
 	jadStreamSeek seek;
+	jadStreamGet get;
+	jadStreamPut put;
+	jadStreamFlush flush;
 };
 
 //a simple memory allocator interface, in case we need it
@@ -79,7 +96,7 @@ struct jadAllocator
 	void* opaque;
 	jadAllocatorAlloc alloc;
 	jadAllocatorFree free;
-};
+} ;
 
 //a timestamp like the format stored on a disc
 struct jadTimestamp
@@ -123,19 +140,19 @@ struct jadSubchannelQ
 };
 
 //Retrieves the initial set of timestamps (min,sec,frac) as a convenient jadTimestamp from a jadSubchannelQ
-struct jadTimestamp jadSubchannelQ_GetTimestamp(struct jadSubchannelQ* q);
+struct jadTimestamp jadSubchannelQ_GetTimestamp(jadSubchannelQ* q);
 
 //Retrieves the second set of timestamps (ap_min, ap_sec, ap_frac) as a convenient jadTimestamp from a jadSubchannelQ
-struct jadTimestamp jadSubchannelQ_GetAPTimestamp(struct jadSubchannelQ* q);
+struct jadTimestamp jadSubchannelQ_GetAPTimestamp(jadSubchannelQ* q);
 
 //computes a subchannel Q status byte from the provided adr and control values
 uint8_t jadSubchannelQ_ComputeStatus(uint32_t adr, enum jadEnumControlQ control); // { return (uint8_t)(adr | (((int)control) << 4)); }
 	
 //Retrives the ADR field of the q_status member (low 4 bits) of a jadSubchannelQ
-int jadSubchannelQ_GetADR(struct jadSubchannelQ* q); // { get { return q_status & 0xF; } }
+int jadSubchannelQ_GetADR(jadSubchannelQ* q); // { get { return q_status & 0xF; } }
 
 //Retrieves the CONTROL field of the q_status member (high 4 bits) of a jadSubchannelQ
-enum jadEnumControlQ jadSubchannelQ_CONTROL(struct jadSubchannelQ* q);
+enum jadEnumControlQ jadSubchannelQ_CONTROL(jadSubchannelQ* q);
 
 //sets a jadSubchannelQ status from the provided adr and control values
 void jadSubchannelQ_SetStatus(uint8_t adr, enum jadEnumControlQ control); // { q_status = ComputeStatus(adr, control); }
@@ -169,16 +186,16 @@ struct jadContext
 };
 
 //opens a jadContext, which gets its data from the provided stream and allocator
-int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocator* allocator);
+int jadOpen(jadContext* jad, jadStream* stream, jadAllocator* allocator);
 
 //writes the given jad to the output stream as a JAC file
-int jadWriteJAC(struct jadContext* jad, struct jadStream* stream);
+int jadWriteJAC(jadContext* jad, jadStream* stream);
 
 //writes the given jad to the output stream as a JAD file
-int jadWriteJAD(struct jadContext* jad, struct jadStream* stream);
+int jadWriteJAD(jadContext* jad, jadStream* stream);
 
 //closes a jadContext opened with jadOpen. do not call on unopened jadContexts.
-int jadClose(struct jadContext* jad);
+int jadClose(jadContext* jad);
 
 //converts a 2352-byte BIN file to JAD
 void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath);

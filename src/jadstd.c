@@ -1,27 +1,44 @@
 #include <stdio.h>
 #include "jadstd.h"
 
-int jadstd_StdioRead(void* buffer, size_t bytes, struct jadStream* stream)
+int jadstd_StdioRead(void* buffer, size_t bytes, jadStream* stream)
 {
 	FILE* f = (FILE*)stream->opaque;
 	return fread(buffer,1,bytes,f);
 }
 
-int jadstd_StdioWrite(const void* buffer, size_t bytes, struct jadStream* stream)
+int jadstd_StdioWrite(const void* buffer, size_t bytes, jadStream* stream)
 {
 	FILE* f = (FILE*)stream->opaque;
 	return fwrite(buffer,1,bytes,f);
 }
 
-long jadstd_StdioSeek(struct jadStream* stream, long offset, int origin)
+long jadstd_StdioSeek(jadStream* stream, long offset, int origin)
 {
 	FILE* f = (FILE*)stream->opaque;
 	int ret = fseek(f,offset,origin);
 	if(ret<0) return ret;
-	return ftell(f);
+	offset = ftell(f);
+	return offset;
 }
 
-jadError jadstd_OpenStdio(struct jadStream* stream, const char* fname, const char* mode)
+int jadstd_StdioGet(jadStream* stream)
+{
+	int ret = fgetc((FILE*)stream->opaque);
+	if(ret == EOF)
+		return JAD_EOF;
+	else return ret;
+}
+
+int jadstd_StdioPut(jadStream* stream, uint8_t value)
+{
+	int ret = fputc(value, (FILE*)stream->opaque);
+	if(ret == EOF)
+		return JAD_EOF;
+	else return ret;
+}
+
+jadError jadstd_OpenStdio(jadStream* stream, const char* fname, const char* mode)
 {
 	FILE* f = fopen(fname,mode);
 	if(f == NULL)
@@ -35,7 +52,7 @@ jadError jadstd_OpenStdio(struct jadStream* stream, const char* fname, const cha
 	return JAD_OK;
 }
 
-jadError jadstd_CloseStdio(struct jadStream* stream)
+jadError jadstd_CloseStdio(jadStream* stream)
 {
 	if(stream->opaque == NULL)
 		return JAD_ERROR;

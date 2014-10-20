@@ -9,6 +9,7 @@
 static const uint8_t kSync[] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
 static const char* kMagic = "JADJAC!\0";
 
+#define OFS_FLAGS 0x0C
 #define OFS_NUMSECTORS 0x10
 #define OFS_TOC 0x20
 
@@ -25,6 +26,8 @@ static const char* kMagic = "JADJAC!\0";
 #define JACOP_SYNTHESIZE_ECM_MODE2_2 0x23 //synthesizes EDC at sec[0x92C]=EDC(16,0x91C)
 
 #define JACOP_DECOMPRESS_FLAG 0x40 //indicates that copies should come from the codec bitstream instead (maybe, just an idea)
+
+#define JACOP_COMPRESS_DATA_2340 (JACOP_COPY_DATA_2340 | JACOP_DECOMPRESS_FLAG)
 
 
 //test
@@ -75,9 +78,12 @@ int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocato
 	
 	jad->allocator = allocator;
 	jad->stream = stream;
+
+	//TODO - better header reading and validation
 	
-	//read the numsectors
-	if(!_jadSeek(stream,OFS_NUMSECTORS)) return JAD_ERROR;
+	//read what of the header we need
+	if(!_jadSeek(stream,OFS_FLAGS)) return JAD_ERROR;
+	if(!_jadRead32(stream,&jad->flags)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->numSectors)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->numTocEntries)) return JAD_ERROR;
 
@@ -133,7 +139,7 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 			stream->read(sector->entire,12,stream);
 			break;
 		case JACOP_COPY_DATA_2340:
-			stream->read(sector->data,2340,stream);
+			stream->read(sector->data+12,2340,stream);
 			break;
 		case JACOP_COPY_SUBCODE_MASK:
 			_jadRead8(stream,&arg);
@@ -155,6 +161,10 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 		}
 
 	} //opcode processing loop
+}
+
+int _jadStreamEncode(void* buf, size_t amount, struct jadStream* codec, struct jadStream* outstream)
+{
 
 }
 
@@ -183,9 +193,13 @@ int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struc
 		_jadWriteBytes(stream,sector->entire,12);
 	}
 
-	//copy the main data sector (TODO - detect different ECM modes, pre-code, compress, etc.)
+	//test 1. copy the main data sector (TODO - detect different ECM modes, pre-code, compress, etc.)
 	_jadWrite8(stream,JACOP_COPY_DATA_2340);
-	_jadWriteBytes(stream,sector->entire+12,2436);
+	_jadWriteBytes(stream,sector->entire+12,2340);
+
+	//test 2. encode it
+	//_jadWrite8(stream,JACOP_COMPRESS_DATA_2340);
+	//_jadWriteBytes(stream,sector->entire+12,2436);
 
 	//handle the subcode
 	_jadWrite8(stream,JACOP_COPY_SUBCODE_MASK);
@@ -205,6 +219,7 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	const int isJaced = jad->flags & jadFlags_JAC;
 	uint32_t i,s;
 	uint32_t ofsIndex = OFS_TOC + jad->numTocEntries*12;
+	uint32_t ofsSectorsPastIndex = ofsIndex + jad->numSectors*4; //(each sector index is 4 bytes right now.. not sufficient for dvds but working ok for cds for now)
 
 	struct jadStream* ins = jad->stream;
 	struct jadStream* outs = stream;
@@ -227,7 +242,11 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 			outs->write(&tocEntry,sizeof(tocEntry),outs);
 		}
 	}
-	
+
+	//skip the output cursor past the index. we'll start writing encoded sectors there
+	if(JACIT)
+		_jadSeek(outs, ofsSectorsPastIndex);
+
 	//for each sector, encode and write the index
 	for(s=0;s<(int)jad->numSectors;s++)
 	{
@@ -251,6 +270,14 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 		//decompress or read the sector directly, as appropriate
 		if(isJaced)
 		{
+			uint32_t sector_ofs;
+			//seek the sector index record
+			if(!_jadSeek(ins,ofsIndex + s*4))
+				return JAD_ERROR;
+			if(!_jadRead32(ins,&sector_ofs))
+				return JAD_ERROR;
+			if(!_jadSeek(ins,sector_ofs))
+				return JAD_ERROR;
 			if(_jadDecodeSector(&sector, ins))
 				return JAD_ERROR;
 		}
@@ -302,7 +329,7 @@ void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath)
 	FILE* outf = fopen(outpath,"wb");
 
 	//write the format
-	fwrite(&kMagic,1,8,outf); //magic
+	fwrite(kMagic,1,8,outf); //magic
 	fwrite(&kVersion,1,4,outf); //version
 	fwrite(&kFlags,1,4,outf); //flags
 	fwrite(&kReserved,1,4,outf); //numsectors later
@@ -343,7 +370,7 @@ int jadUtil_CompareFiles(const char* inpath, const char* inpath2)
 		int b = fread(bufb,1,4096,infb);
 		if(a != b) return -1;
 		if(a==-1) return 0;
-		if(!memcmp(bufa,bufb,a))
+		if(memcmp(bufa,bufb,a))
 			return -1;
 		if(a != 4096) return 0;
 	}

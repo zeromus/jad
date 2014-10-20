@@ -9,8 +9,8 @@
 extern "C" {
 #endif
 
-jadError jadstd_OpenStdio(struct jadStream* stream, const char* fname, const char* mode);
-jadError jadstd_CloseStdio(struct jadStream* stream);
+jadError jadstd_OpenStdio(jadStream* stream, const char* fname, const char* mode);
+jadError jadstd_CloseStdio(jadStream* stream);
 
 #ifdef  __cplusplus
 }
