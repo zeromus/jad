@@ -1,8 +1,16 @@
+//IDEA: we might should split the sector into a several streams.. for now lets call it 'header' and 'codec'
+//the point being, several opcodes from the header portion will read data from the codec stream, which wont need to be interleaved with the opcode bytes.
+//this would allow us to keep the codec running without having to flush and re-initialize it.. 
+//BUT.. is there any reason to expect similarity between different sections of data? this would add some complexity to the logic.
+//but it may be a good idea for the types of encoders we use
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 
 #include "jad.h"
+
+#include "jadcodec_heatshrink.h"
 
 #define SYNC_SIZE 12
 
@@ -80,6 +88,7 @@ int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocato
 	jad->stream = stream;
 
 	//TODO - better header reading and validation
+	//TODO - make an alternate codepath for safely blittable little endian systems to read in one piece
 	
 	//read what of the header we need
 	if(!_jadSeek(stream,OFS_FLAGS)) return JAD_ERROR;
@@ -101,6 +110,68 @@ void jadTOCEntry_Clear(jadTOCEntry* tocentry)
 	memset(tocentry,0,sizeof(*tocentry));
 }
 
+//run data from @outstream through @codec, until @amount bytes have been placed in @buf
+int _jadStreamDecode(jadStream* outstream, jadStream* codec, void* buf, size_t amount)
+{
+	//lets do this first a byte at a time. once thats proven, we'll try it block by block as the codec can take it
+
+	uint8_t* ptr = (uint8_t*)buf;
+	while(amount>0)
+	{
+		int ret = outstream->get(outstream);
+		if(ret<0) return ret;
+		ret = codec->put(codec,(uint8_t)ret);
+		if(ret<0) return ret;
+
+		for(;;)
+		{
+			int c = codec->get(codec);
+			if(c==JAD_EOF) break;
+			if(c<0) return JAD_ERROR;
+			if(amount==0) return JAD_ERROR;
+			amount--;
+			*ptr++ = (uint8_t)c;
+		}
+
+		if(amount==0) break;
+	}
+
+	return JAD_OK;
+}
+
+//run @amount bytes from @buf through @codec and into @outstream
+int _jadStreamEncode(void* buf, size_t amount, jadStream* codec, jadStream* outstream)
+{
+	//lets do this first a byte at a time. once thats proven, we'll try it block by block as the codec can take it
+
+	uint8_t* ptr = (uint8_t*)buf;
+	while(amount>0)
+	{
+		int ret = codec->put(codec, *ptr);
+		if(ret != JAD_OK) return ret;
+
+		ptr++;
+		amount--;
+
+		//if we just finished, flush the operation
+		//TODO - we may not want to do this here, actually, in order to accumulate multiple pieces of data through one encoder. I'm not sure that's a good idea though.
+		if(amount==0)
+			codec->flush(codec);
+
+		//read from the codec until it's empty
+		for(;;)
+		{
+			int c = codec->get(codec);
+			if(c==JAD_EOF) break;
+			else if(c<0) return c;
+			outstream->put(outstream,(uint8_t)c);
+		}
+	}
+
+	return JAD_OK;
+}
+
+
 //2048 bytes packed into 2352: 
 //12 bytes sync(00 ff ff ff ff ff ff ff ff ff ff 00)
 //3 bytes sector address (min+A0),sec,frac //does this correspond to ccd `point` field in the TOC entries?
@@ -115,8 +186,9 @@ int _jadCheckSync(struct jadSector* sector)
 
 int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 {
-	//sector is assumed to start at 0 (this rule may be waived if it speeds decompression. it simplifies analysis of encoding, however)
-	//IDEA - assume sector starts at 0 with a valid sync field
+	//OLD IDEA: sector is assumed to start at 0 (this rule may be waived if it speeds decompression. it simplifies analysis of encoding, however)
+	//EDIT: we dont really like this idea
+	//NEWER IDEA - assume sector starts at 0 with a valid sync field, at least
 
 	for(;;)
 	{
@@ -151,6 +223,13 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 			}
 			break;
 
+		case JACOP_COMPRESS_DATA_2340:
+			{
+				jadHeatshrinkDecoder decoder;
+				jadcodec_OpenHeatshrinkDecoder(&decoder);
+				_jadStreamDecode(stream,&decoder.stream,sector->entire+12,2430);
+				break;
+			}
 		case JACOP_SYNTHESIZE_SYNC:
 			memcpy(sector->data,kSync,SYNC_SIZE);
 			break;
@@ -161,11 +240,6 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 		}
 
 	} //opcode processing loop
-}
-
-int _jadStreamEncode(void* buf, size_t amount, struct jadStream* codec, struct jadStream* outstream)
-{
-
 }
 
 int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struct jadStream* stream)
@@ -194,12 +268,16 @@ int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struc
 	}
 
 	//test 1. copy the main data sector (TODO - detect different ECM modes, pre-code, compress, etc.)
-	_jadWrite8(stream,JACOP_COPY_DATA_2340);
-	_jadWriteBytes(stream,sector->entire+12,2340);
+	//_jadWrite8(stream,JACOP_COPY_DATA_2340);
+	//_jadWriteBytes(stream,sector->entire+12,2340);
 
 	//test 2. encode it
-	//_jadWrite8(stream,JACOP_COMPRESS_DATA_2340);
-	//_jadWriteBytes(stream,sector->entire+12,2436);
+	{
+		jadHeatshrinkEncoder encoder;
+		jadcodec_OpenHeatshrinkEncoder(&encoder);
+		_jadWrite8(stream,JACOP_COMPRESS_DATA_2340);
+		_jadStreamEncode(sector->entire+12,2430,&encoder.stream,stream);
+	}
 
 	//handle the subcode
 	_jadWrite8(stream,JACOP_COPY_SUBCODE_MASK);
@@ -314,7 +392,7 @@ int jadWriteJAD(struct jadContext* jad, struct jadStream* stream)
 	return _jadWrite(jad,stream,0);
 }
 
-//this does a poor job write now. a better job would generate correct Q-subchannel data, and setup the TOC, among possibly other things...
+//this does a poor job right now. a better job would generate correct Q-subchannel data, and setup the TOC, among possibly other things...
 void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath)
 {
 	const uint32_t kVersion = 1;

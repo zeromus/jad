@@ -49,6 +49,8 @@ jadError jadstd_OpenStdio(jadStream* stream, const char* fname, const char* mode
 	stream->read = &jadstd_StdioRead;
 	stream->write = &jadstd_StdioWrite;
 	stream->seek = &jadstd_StdioSeek;
+	stream->get = &jadstd_StdioGet;
+	stream->put = &jadstd_StdioPut;
 	return JAD_OK;
 }
 

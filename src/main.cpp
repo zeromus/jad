@@ -42,10 +42,9 @@ int main(int argc, char **argv)
 	printf("cmp: %d\n",jadUtil_CompareFiles("test.JAD","memtest.jad"));
 
 	std::vector<uint8_t> encodeTest;
-	for(int i=0;i<5;i++) 
-		encodeTest.push_back(i);
-	for(int i=0;i<5;i++) 
-		encodeTest.push_back(i);
+	for(int i=0;i<96;i++) encodeTest.push_back(0);
+	for(int i=0;i<5;i++) encodeTest.push_back(i);
+	for(int i=0;i<5;i++) encodeTest.push_back(i);
 
 	jadHeatshrinkEncoder encoder;
 	jadcodec_OpenHeatshrinkEncoder(&encoder);
@@ -54,6 +53,7 @@ int main(int argc, char **argv)
 
 	printf("encoded: ");
 	std::vector<uint8_t> decodeTest;
+	int csize = 0;
 	for(int i=0;i<(int)encodeTest.size();i++)
 	{
 		int c = encodeTest[i];
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		for(;;)
 		{
 			c = encoder.stream.get(&encoder.stream);
-			bool done = (c==JAD_EOF) ;
+			bool done = (c==JAD_EOF);
 			if(done)
 			{
 				decoder.stream.flush(&decoder.stream);
@@ -72,6 +72,7 @@ int main(int argc, char **argv)
 			else 
 			{
 				int did = decoder.stream.put(&decoder.stream,(uint8_t)c);
+				csize++;
 				printf("%02X ",c);
 			}
 			for(;;)
@@ -84,13 +85,13 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("\n");
 	printf("decoded: ");
 	for(int i=0;i<(int)decodeTest.size();i++)
 	{
 		printf("%02X ",decodeTest[i]);
 	}
 	printf("\n");
+	printf("---(%d B -> %d B -> %d B)\n",encodeTest.size(),csize,decodeTest.size());
 
 	int zzz=9;
 

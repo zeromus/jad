@@ -62,7 +62,7 @@ typedef int (*jadStreamRead)(void* buffer, size_t bytes, jadStream* stream);
 //the write callback for a jadStream
 typedef int (*jadStreamWrite)(const void* buffer, size_t bytes, jadStream* stream);
 
-//the seek callback for a jadStream. like fseek, but returns ftell. (0,SEEK_CUR) should work as ftell
+//the seek callback for a jadStream. like fseek, but returns ftell. (0,SEEK_CUR) should work as ftell and work even on fundamentally non-seekable streams.
 typedef long (*jadStreamSeek)(jadStream* stream, long offset, int origin);
 
 //the codec get callback for a jadStream, like getc, but no provision for ferror is provided
