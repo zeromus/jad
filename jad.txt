@@ -1,3 +1,5 @@
+TODO - for extension purposes, add subversion (just in case its useful), and featurelevel (in case we need discs to demand a certain hardware featurelevel for decoding)
+
 The JAD/JAC format is designed for use with the JAD library.
 It is designed to be simple and compact for embedded platforms.
 Consequently the storage is not as compact as it could be.

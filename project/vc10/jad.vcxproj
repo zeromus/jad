@@ -17,6 +17,7 @@
     <ClInclude Include="..\..\src\heatshrink\heatshrink_encoder.h" />
     <ClInclude Include="..\..\src\jad.h" />
     <ClInclude Include="..\..\src\jadcodec_heatshrink.h" />
+    <ClInclude Include="..\..\src\jadq.h" />
     <ClInclude Include="..\..\src\jadstd.h" />
     <ClInclude Include="stdbool.h" />
   </ItemGroup>
@@ -25,6 +26,7 @@
     <ClCompile Include="..\..\src\heatshrink\heatsink_encoder.c" />
     <ClCompile Include="..\..\src\jad.c" />
     <ClCompile Include="..\..\src\jadcodec_heatshrink.c" />
+    <ClCompile Include="..\..\src\jadq.c" />
     <ClCompile Include="..\..\src\jadstd.c" />
     <ClCompile Include="..\..\src\main.cpp" />
   </ItemGroup>

@@ -8,13 +8,13 @@
 #include <string.h>
 #include <stdint.h>
 
+
 #include "jad.h"
+#include "jadq.h"
 
 #include "jadcodec_heatshrink.h"
 
-#define SYNC_SIZE 12
-
-static const uint8_t kSync[] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
+static const uint8_t kSync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
 static const char* kMagic = "JADJAC!\0";
 
 #define OFS_FLAGS 0x0C
@@ -37,6 +37,13 @@ static const char* kMagic = "JADJAC!\0";
 
 #define JACOP_COMPRESS_DATA_2340 (JACOP_COPY_DATA_2340 | JACOP_DECOMPRESS_FLAG)
 
+int jadStaticInit()
+{
+	void jadq_InitCRC();
+	jadq_InitCRC();
+	
+	return JAD_OK;
+}
 
 //test
 void _jadWriteMagic(struct jadStream* stream)
@@ -181,7 +188,7 @@ int _jadStreamEncode(void* buf, size_t amount, jadStream* codec, jadStream* outs
 
 int _jadCheckSync(struct jadSector* sector)
 {
-	return !memcmp(sector->data,kSync,SYNC_SIZE);
+	return !memcmp(sector->data,kSync,12);
 }
 
 int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
@@ -231,7 +238,7 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 				break;
 			}
 		case JACOP_SYNTHESIZE_SYNC:
-			memcpy(sector->data,kSync,SYNC_SIZE);
+			memcpy(sector->data,kSync,12);
 			break;
 
 		default:
@@ -392,19 +399,37 @@ int jadWriteJAD(struct jadContext* jad, struct jadStream* stream)
 	return _jadWrite(jad,stream,0);
 }
 
-//this does a poor job right now. a better job would generate correct Q-subchannel data, and setup the TOC, among possibly other things...
+void jadTimestamp_increment(jadTimestamp* ts)
+{
+	ts->FRAC++;
+	if(ts->FRAC == 75)
+	{
+		ts->FRAC = 0;
+		ts->SEC++;
+	}
+	if(ts->SEC==60)
+	{
+		ts->SEC = 0;
+		ts->MIN++;
+	}
+}
+
+//this does a poor job right now. a better job would generate correct Q-subchannel data, and setup the TOC, among possibly other things... stuff libmirage will do for us!
 void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath)
 {
 	const uint32_t kVersion = 1;
 	const uint32_t kFlags = 0;
 	const uint32_t kReserved = 0;
 	const uint32_t kNumtocs = 0;
-	const uint8_t kSubcode[96] = {0};
-
+	uint8_t subcode[96] = {0};
 	uint32_t nSectors = 0;
-	
+	jadTimestamp tsNow = {0};
+	jadSubchannelQ qTemp, qTemplate = { 0, 1, 0, {0}, 0, {0} };
+
 	FILE* inf = fopen(inpath,"rb");
 	FILE* outf = fopen(outpath,"wb");
+
+	memcpy(subcode,kSync,12);
 
 	//write the format
 	fwrite(kMagic,1,8,outf); //magic
@@ -424,7 +449,12 @@ void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath)
 		uint8_t buf[2352];
 		fread(buf,1,2352,inf);
 		fwrite(buf,1,2352,outf);
-		fwrite(kSubcode,1,96,outf);
+
+		jadSubchannelQ_SynthesizeUser(&qTemp,&qTemplate,&tsNow,&tsNow);
+		jadSubchannelQ_SerializeToDeinterleaved(&qTemp,subcode+12);
+
+		fwrite(subcode,1,96,outf);
+		jadTimestamp_increment(&tsNow);
 		nSectors++;
 	}
 
