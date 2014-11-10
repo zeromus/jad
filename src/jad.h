@@ -53,7 +53,11 @@ enum jadFlags
 {
 	jadFlags_None = 0,
 
+	//whether the file is JAC subformat (compressed)
 	jadFlags_JAC = 1,
+
+	//whether hash fields are present/filled-in
+	jadFlags_IsHashed = 2,
 };
 
 //the read callback for a jadStream
