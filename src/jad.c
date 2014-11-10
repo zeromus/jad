@@ -93,6 +93,7 @@ int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocato
 	
 	jad->allocator = allocator;
 	jad->stream = stream;
+	jad->createParams = NULL;
 
 	//TODO - better header reading and validation
 	//TODO - make an alternate codepath for safely blittable little endian systems to read in one piece
@@ -102,6 +103,21 @@ int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocato
 	if(!_jadRead32(stream,&jad->flags)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->numSectors)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->numTocEntries)) return JAD_ERROR;
+
+	return JAD_OK;
+}
+
+int jadCreate(jadContext* jad, jadCreationParams* jcp, jadAllocator* allocator)
+{
+	if(!jad || !jcp) return JAD_ERROR;
+
+	jad->allocator = allocator;
+	jad->stream = NULL;
+	jad->createParams = jcp;
+
+	jad->flags = 0;
+	jad->numSectors = jcp->numSectors;
+	jad->numTocEntries = jcp->numTocEntries;
 
 	return JAD_OK;
 }
@@ -186,9 +202,9 @@ int _jadStreamEncode(void* buf, size_t amount, jadStream* codec, jadStream* outs
 //cue sheets may use mode1_2048 (and the error coding needs to be regenerated to get accurate raw data) or mode1_2352 (the entire sector is present)
 //audio is a different mode, seems to be just 2352 bytes with no sync, header or error correction. i guess the CIRC error correction is still there
 
-int _jadCheckSync(struct jadSector* sector)
+int _jadCheckSync(uint8_t* sector)
 {
-	return !memcmp(sector->data,kSync,12);
+	return !memcmp(sector,kSync,12);
 }
 
 int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
@@ -249,16 +265,16 @@ int _jadDecodeSector(struct jadSector* sector, struct jadStream* stream)
 	} //opcode processing loop
 }
 
-int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struct jadStream* stream)
+int _jadEncodeSector(uint32_t jadEncodeSettings, uint8_t* sector, uint8_t* subcode, struct jadStream* stream)
 {
 	//early exit for testing: if we dont want to do anything, for reference, just copy it directly
 	if(jadEncodeSettings & jadEncodeSettings_DirectCopy)
 	{
 		_jadWrite8(stream,JACOP_COPY_FULL_2352);
-		_jadWriteBytes(stream,sector->entire,2352);
+		_jadWriteBytes(stream,sector,2352);
 		_jadWrite8(stream,JACOP_COPY_SUBCODE_MASK);
 		_jadWrite8(stream,0xFF);
-		_jadWriteBytes(stream,sector->subcode,96);
+		_jadWriteBytes(stream,subcode,96);
 		_jadWrite8(stream,JACOP_END);
 		return JAD_OK;
 	}
@@ -271,7 +287,7 @@ int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struc
 	else
 	{
 		_jadWrite8(stream,JACOP_COPY_SYNC_12);
-		_jadWriteBytes(stream,sector->entire,12);
+		_jadWriteBytes(stream,sector,12);
 	}
 
 	//test 1. copy the main data sector (TODO - detect different ECM modes, pre-code, compress, etc.)
@@ -283,13 +299,13 @@ int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struc
 		jadHeatshrinkEncoder encoder;
 		jadcodec_OpenHeatshrinkEncoder(&encoder);
 		_jadWrite8(stream,JACOP_COMPRESS_DATA_2340);
-		_jadStreamEncode(sector->entire+12,2430,&encoder.stream,stream);
+		_jadStreamEncode(sector+12,2430,&encoder.stream,stream);
 	}
 
 	//handle the subcode
 	_jadWrite8(stream,JACOP_COPY_SUBCODE_MASK);
 	_jadWrite8(stream,0xFF);
-	_jadWriteBytes(stream,sector->subcode,96);
+	_jadWriteBytes(stream,subcode,96);
 
 
 	_jadWrite8(stream,JACOP_END);
@@ -297,8 +313,12 @@ int _jadEncodeSector(uint32_t jadEncodeSettings, struct jadSector* sector, struc
 	return JAD_OK;
 }
 
-int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
+//this is a private implementtion in case we need to wrap it somehow
+static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 {
+	//part of the magic of this function is that it can read from a jadOpen'd file or a jadCreate'd file
+	//therefore it is useful both for conversion and creation
+
 	const uint32_t encodeSettings = jadEncodeSettings_None;
 	const uint32_t flags = JACIT?jadFlags_JAC:jadFlags_None;
 	const int isJaced = jad->flags & jadFlags_JAC;
@@ -307,9 +327,10 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	uint32_t ofsSectorsPastIndex = ofsIndex + jad->numSectors*4; //(each sector index is 4 bytes right now.. not sufficient for dvds but working ok for cds for now)
 
 	struct jadStream* ins = jad->stream;
+	struct jadCreationParams* incp = jad->createParams;
 	struct jadStream* outs = stream;
 
-	_jadWriteMagic(outs);
+	_jadWriteMagic(outs); //8 bytes
 	_jadWrite32(outs,1); //version
 	_jadWrite32(outs,flags); //flags
 	_jadWrite32(outs,jad->numSectors);
@@ -318,6 +339,14 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	_jadWrite32(outs,0); //reserved for ??
 	
 	//copy the TOC to output
+	if(incp)
+	{
+		for(i=0;i<jad->numTocEntries;i++)
+		{
+			outs->write(&incp->tocEntries[i],sizeof(jadTOCEntry),outs);
+		}
+	}
+	else
 	{
 		jadTOCEntry tocEntry;
 		_jadSeek(ins,OFS_TOC);
@@ -335,7 +364,13 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	//for each sector, encode and write the index
 	for(s=0;s<(int)jad->numSectors;s++)
 	{
+		//a temporary sector, in case we need it
 		struct jadSector sector;
+
+		//the pointers we'll use for each of these buffers, but we may alter them if the temp sector isnt used
+		uint8_t *dataptr = sector.data;
+		uint8_t *subcodeptr = sector.subcode;
+
 		int ret;
 
 		//maintain the index, if we're writing a JAC
@@ -356,6 +391,7 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 		if(isJaced)
 		{
 			uint32_t sector_ofs;
+
 			//seek the sector index record
 			if(!_jadSeek(ins,ofsIndex + s*4))
 				return JAD_ERROR;
@@ -368,35 +404,36 @@ int _jadWrite(struct jadContext* jad, struct jadStream* stream, int JACIT)
 		}
 		else
 		{
-			if(ins->read(&sector,sizeof(sector),ins) != sizeof(sector))
-				return JAD_ERROR;
+			if(incp)
+			{
+				incp->callback(incp->opaque,s,(void**)&dataptr,(void**)subcodeptr);
+			}
+			else
+			{
+				if(ins->read(&sector,sizeof(sector),ins) != sizeof(sector))
+					return JAD_ERROR;
+			}
 		}
 		
 		//compress or dump the sector, as appropriate
 		if(JACIT)
 		{
-			ret = _jadEncodeSector(encodeSettings, &sector, outs);
+			ret = _jadEncodeSector(encodeSettings, dataptr, subcodeptr, outs);
 		}
 		else
 		{
-			if(outs->write(&sector,sizeof(sector),outs) != sizeof(sector))
-				return JAD_ERROR;
+			if(outs->write(dataptr,2352,outs) != 2352) return JAD_ERROR;
+			if(outs->write(subcodeptr,96,outs) != 96) return JAD_ERROR;
 		}
-
 
 	}
 
 	return JAD_OK;
 }
 
-int jadWriteJAC(struct jadContext* jad, struct jadStream* stream)
+int jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 {
-	return _jadWrite(jad,stream,1);
-}
-
-int jadWriteJAD(struct jadContext* jad, struct jadStream* stream)
-{
-	return _jadWrite(jad,stream,0);
+	return _jadDump(jad,stream,JACIT);
 }
 
 void jadTimestamp_increment(jadTimestamp* ts)
@@ -414,73 +451,3 @@ void jadTimestamp_increment(jadTimestamp* ts)
 	}
 }
 
-//this does a poor job right now. a better job would generate correct Q-subchannel data, and setup the TOC, among possibly other things... stuff libmirage will do for us!
-void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath)
-{
-	const uint32_t kVersion = 1;
-	const uint32_t kFlags = 0;
-	const uint32_t kReserved = 0;
-	const uint32_t kNumtocs = 0;
-	uint8_t subcode[96] = {0};
-	uint32_t nSectors = 0;
-	jadTimestamp tsNow = {0};
-	jadSubchannelQ qTemp, qTemplate = { 0, 1, 0, {0}, 0, {0} };
-
-	FILE* inf = fopen(inpath,"rb");
-	FILE* outf = fopen(outpath,"wb");
-
-	memcpy(subcode,kSync,12);
-
-	//write the format
-	fwrite(kMagic,1,8,outf); //magic
-	fwrite(&kVersion,1,4,outf); //version
-	fwrite(&kFlags,1,4,outf); //flags
-	fwrite(&kReserved,1,4,outf); //numsectors later
-	fwrite(&kNumtocs,1,4,outf); //numtocs
-	fwrite(&kReserved,1,4,outf); //reserved for CRC
-	fwrite(&kReserved,1,4,outf); //reserved
-
-	//write the TOC
-	//(nothing to do)
-
-	//begin copying sectors
-	while(!feof(inf))
-	{
-		uint8_t buf[2352];
-		fread(buf,1,2352,inf);
-		fwrite(buf,1,2352,outf);
-
-		jadSubchannelQ_SynthesizeUser(&qTemp,&qTemplate,&tsNow,&tsNow);
-		jadSubchannelQ_SerializeToDeinterleaved(&qTemp,subcode+12);
-
-		fwrite(subcode,1,96,outf);
-		jadTimestamp_increment(&tsNow);
-		nSectors++;
-	}
-
-	//rewrite the numsectors
-	fseek(outf,16,SEEK_SET);
-	fwrite(&nSectors,1,4,outf);
-
-	fclose(inf);
-	fclose(outf);
-}
-
-int jadUtil_CompareFiles(const char* inpath, const char* inpath2)
-{
-	FILE* infa = fopen(inpath,"rb");
-	FILE* infb = fopen(inpath2,"rb");
-
-	char bufa[4096], bufb[4096];
-	for(;;)
-	{
-		int a = fread(bufa,1,4096,infa);
-		int b = fread(bufb,1,4096,infb);
-		if(a != b) return -1;
-		if(a==-1) return 0;
-		if(memcmp(bufa,bufb,a))
-			return -1;
-		if(a != 4096) return 0;
-	}
-	return 0;
-}

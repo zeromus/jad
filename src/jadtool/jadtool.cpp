@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "jad.h"
+#include "jadstd.h"
 
 /*
 Issue a series of commands and arguments
@@ -128,6 +129,48 @@ public:
 	}
 };
 
+struct CreateContext
+{
+	CreateContext() 
+		: disc(NULL)
+		, sector(NULL)
+	{
+	}
+	MirageDisc* disc;
+	MirageSector* sector;
+};
+
+static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer)
+{
+	//TODO - this might leave a half-finished file if we bail from here. let's return an error to let the jad processes complete gracefully
+
+	CreateContext* ctx = (CreateContext*)opaque;
+
+	//close the old sector, since the buffer is done being used
+	if(ctx->sector != NULL)
+		g_object_unref(ctx->sector);
+
+	//open sector
+	GError *error = NULL;
+	ctx->sector = mirage_disc_get_sector(ctx->disc,sectorNumber,&error);
+	gbailif(error);
+
+	//extract data
+	const guint8 *secbuf, *subbuf;
+	mirage_sector_extract_data(ctx->sector,&secbuf,2352,MIRAGE_SUBCHANNEL_PW,&subbuf,96,&error);
+	gbailif(error);
+
+	static uint8_t s_subbuf[96]; //this is needed because libmirage sends us interleaved subchannel
+
+	//but for now, dont bother
+	memcpy(s_subbuf,subbuf,96);
+
+	*sectorBuffer = (void*)secbuf;
+	*subcodeBuffer = (void*)secbuf;
+
+	return JAD_OK;
+}
+
 void command_jadjac(bool isjac)
 {
 	//for now, thats just how it is
@@ -155,18 +198,36 @@ void command_jadjac(bool isjac)
 	//well... i dont know. i guess we'll skip the lead-in, or else we read too many sectors next
 	length -= 150;
 
-	//loop through sectors and do something with them, dump it i dont know
-	for(int i=0;i<length;i++)
-	{
-		MirageSector* sector = mirage_disc_get_sector(disc,i,&error);
-		gbailif(error);
+	//libjad will fire callbacks, so this will track our process stte
+	CreateContext cc;
+	cc.disc = disc;
 
-		const guint8 *secbuf, *subbuf;
-		mirage_sector_extract_data(sector,&secbuf,2352,MIRAGE_SUBCHANNEL_PW,&subbuf,96,&error);
-		gbailif(error);
+	//instructions to libjad for how to create the jad
+	jadCreationParams jcp;
+	jcp.opaque = &cc;
+	jcp.numTocEntries = 0;
+	jcp.tocEntries = NULL;
+	jcp.numSectors = length;
+	jcp.callback = myJadCreateCallback;
 
-		g_object_unref(sector);
-	}
+	//create the jad context
+	jadContext jad;
+	if(jadCreate(&jad, &jcp, NULL) != JAD_OK)
+		bail("failed jadCreate");
+
+	//write it out and close the jad
+	jadStream outstream;
+	if(jadstd_OpenStdio(&outstream,opt.outfile,"wb") != JAD_OK)
+		bail("failed opening output file");
+	jadDump(&jad,&outstream,isjac?1:0);
+	jadstd_CloseStdio(&outstream);
+	jadClose(&jad);
+
+	//make sure the last sctor is shut down
+	if(cc.sector != NULL)
+		g_object_unref(cc.sector);
+
+	g_object_unref(disc);
 }
 
 int main(int argc, char** argv)

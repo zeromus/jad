@@ -123,7 +123,24 @@ typedef uint8_t jadTOCEntry[12];
 //clears a jadTOCEntry to zeroes
 void jadTOCEntry_Clear(jadTOCEntry* tocentry);
 
-//the context for JAD-reading operations. 
+//the callback used by libjad to fetch sector raw data when creating a jad/jac file
+//set a pointer to the sector and subcode buffer. subcode should be de-interleaved.
+//these pointers should stay stable until the next call to jadCreateCallback or until common sense tells you theyre done being used by libjad
+typedef int (*jadCreateCallback)(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer);
+
+//the params struct used for jadCreate
+//do not modify this while the context created by jadCreate is still open. moreover, the tocEntries struct must remain intact.
+typedef struct jadCreationParams
+{
+	void* opaque;
+	int numTocEntries;
+	jadTOCEntry* tocEntries;
+	int numSectors;
+	jadCreateCallback callback;
+} jadCreationParams;
+
+
+//the context for JAD-io operations. 
 //consider it as opaque (full declaration provided for easier static allocation)
 //create with jadOpen, etc.
 struct jadContext
@@ -131,28 +148,24 @@ struct jadContext
 	struct jadStream* stream;
 	struct jadAllocator* allocator;
 	uint32_t flags, numSectors, numTocEntries;
+	struct jadCreationParams* createParams;
 };
+
 
 //performs necessary static initialization
 int jadStaticInit();
 
-//opens a jadContext, which gets its data from the provided stream and allocator
+//opens a jadContext, which gets its data from the provided stream (containing a jad/jac file) and allocator
 int jadOpen(jadContext* jad, jadStream* stream, jadAllocator* allocator);
 
-//writes the given jad to the output stream as a JAC file
-int jadWriteJAC(jadContext* jad, jadStream* stream);
+//creates a jadContext based on the provided jadCreationParams, which describe the disc
+int jadCreate(jadContext* jad, jadCreationParams* jcp, jadAllocator* allocator);
 
-//writes the given jad to the output stream as a JAD file
-int jadWriteJAD(jadContext* jad, jadStream* stream);
+//dumps the given jad to the output stream as a JAD or JAC file
+int jadDump(jadContext* jad, jadStream* stream, int JACIT);
 
-//closes a jadContext opened with jadOpen. do not call on unopened jadContexts.
+//closes a jadContext opened with jadOpen or jadCreate. do not call on unopened jadContexts.
 int jadClose(jadContext* jad);
-
-//converts a 2352-byte BIN file to JAD
-void jadUtil_Convert2352ToJad(const char* inpath, const char* outpath);
-
-//compares two files for identity
-int jadUtil_CompareFiles(const char* inpath, const char* inpath2);
 
 void jadTimestamp_increment(jadTimestamp* ts);
 

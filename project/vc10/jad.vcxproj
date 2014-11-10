@@ -19,6 +19,7 @@
     <ClInclude Include="..\..\src\jadcodec_heatshrink.h" />
     <ClInclude Include="..\..\src\jadq.h" />
     <ClInclude Include="..\..\src\jadstd.h" />
+    <ClInclude Include="..\..\src\jadtest.h" />
     <ClInclude Include="stdbool.h" />
   </ItemGroup>
   <ItemGroup>
@@ -28,7 +29,7 @@
     <ClCompile Include="..\..\src\jadcodec_heatshrink.c" />
     <ClCompile Include="..\..\src\jadq.c" />
     <ClCompile Include="..\..\src\jadstd.c" />
-    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\jadtest.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\jad.txt" />
@@ -40,7 +41,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -62,9 +63,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\libjad\</OutDir>
+    <IntDir>$(Configuration)\libjad\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\libjad\</OutDir>
+    <IntDir>$(Configuration)\libjad\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -74,6 +79,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
