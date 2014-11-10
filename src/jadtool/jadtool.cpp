@@ -45,9 +45,60 @@ struct Options {
 	const char *infile, *outfile;
 } opt;
 
+
+class ProgressManager
+{
+public:
+	ProgressManager()
+		: mRunning(false)
+	{ }
+
+	void Start(int totalWork)
+	{
+		mSize = totalWork;
+		mCurr = 0;
+		mLastPct = 0;
+		mRunning = true;
+	}
+
+	void Stop()
+	{
+		mRunning = false;
+		printf("\n");
+	}
+
+	void Tick()
+	{
+		mCurr++;
+		int currPct = mCurr*100/(mSize);
+		for(int i=mLastPct+1;i<=currPct;i++)
+		{
+			if(i%10==0)
+			{
+				printf(" %d%%",i/10*10);
+				if(i==50) printf("\n");
+				else printf(" ");
+			}
+			else printf(".");
+			mLastPct = currPct;
+		}
+	}
+
+	int mSize, mCurr, mLastPct;
+	bool mRunning;
+
+	void TryNewline()
+	{
+		if(!mRunning) return;
+		printf("\n");
+	}
+
+} s_ProgressManager;
+
 static void gbailif(GError* error)
 {
 	if(!error) return;
+	s_ProgressManager.TryNewline();
 	printf("LM:Error %d %d - %s\n",error->code,error->domain,error->message);
 	exit(error->code);
 }
@@ -59,17 +110,20 @@ static void verb(const char* msg, ...)
   va_start(ap, msg); 
 	gchar* str;
 	g_vasprintf(&str,msg,ap);
+	s_ProgressManager.TryNewline();
 	printf("JT:%s\n",str);
 }
 
 static void bail(const char* msg)
 {
+	s_ProgressManager.TryNewline();
 	printf("JT:BAILING!\nJT:%s\n",msg);
 	exit(1);
 }
 
 static void LibmirageVerboseLog(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
 {
+	s_ProgressManager.TryNewline();
 	printf("LM:%s",message);
 }
 
@@ -129,6 +183,8 @@ public:
 	}
 };
 
+
+
 struct CreateContext
 {
 	CreateContext() 
@@ -145,6 +201,8 @@ static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuff
 	//TODO - this might leave a half-finished file if we bail from here. let's return an error to let the jad processes complete gracefully
 
 	CreateContext* ctx = (CreateContext*)opaque;
+
+	s_ProgressManager.Tick();
 
 	//close the old sector, since the buffer is done being used
 	if(ctx->sector != NULL)
@@ -201,6 +259,7 @@ void command_jadjac(bool isjac)
 	//libjad will fire callbacks, so this will track our process stte
 	CreateContext cc;
 	cc.disc = disc;
+	s_ProgressManager.Start(length);
 
 	//instructions to libjad for how to create the jad
 	jadCreationParams jcp;
@@ -222,6 +281,8 @@ void command_jadjac(bool isjac)
 	jadDump(&jad,&outstream,isjac?1:0);
 	jadstd_CloseStdio(&outstream);
 	jadClose(&jad);
+
+	s_ProgressManager.Stop();
 
 	//make sure the last sctor is shut down
 	if(cc.sector != NULL)
