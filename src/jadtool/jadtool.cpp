@@ -95,11 +95,17 @@ public:
 
 } s_ProgressManager;
 
-static void gbailif(GError* error)
+static bool gerrprint(GError* error)
 {
-	if(!error) return;
+	if(!error) return false;
 	s_ProgressManager.TryNewline();
 	printf("LM:Error %d %d - %s\n",error->code,error->domain,error->message);
+	return true;
+}
+
+static void gbailif(GError* error)
+{
+	if(gerrprint(error))
 	exit(error->code);
 }
 
@@ -198,8 +204,6 @@ struct CreateContext
 
 static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer)
 {
-	//TODO - this might leave a half-finished file if we bail from here. let's return an error to let the jad processes complete gracefully
-
 	CreateContext* ctx = (CreateContext*)opaque;
 
 	s_ProgressManager.Tick();
@@ -211,12 +215,12 @@ static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuff
 	//open sector
 	GError *error = NULL;
 	ctx->sector = mirage_disc_get_sector(ctx->disc,sectorNumber,&error);
-	gbailif(error);
+	if(gerrprint(error)) return JAD_ERROR;
 
 	//extract data
 	const guint8 *secbuf, *subbuf;
 	mirage_sector_extract_data(ctx->sector,&secbuf,2352,MIRAGE_SUBCHANNEL_PW,&subbuf,96,&error);
-	gbailif(error);
+	if(gerrprint(error)) return JAD_ERROR;
 
 	static uint8_t s_subbuf[96]; //this is needed because libmirage sends us interleaved subchannel
 
@@ -224,7 +228,7 @@ static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuff
 	memcpy(s_subbuf,subbuf,96);
 
 	*sectorBuffer = (void*)secbuf;
-	*subcodeBuffer = (void*)secbuf;
+	*subcodeBuffer = (void*)s_subbuf;
 
 	return JAD_OK;
 }
@@ -256,10 +260,9 @@ void command_jadjac(bool isjac)
 	//well... i dont know. i guess we'll skip the lead-in, or else we read too many sectors next
 	length -= 150;
 
-	//libjad will fire callbacks, so this will track our process stte
+	//libjad will fire callbacks, so this will track our process state
 	CreateContext cc;
 	cc.disc = disc;
-	s_ProgressManager.Start(length);
 
 	//instructions to libjad for how to create the jad
 	jadCreationParams jcp;
@@ -274,17 +277,27 @@ void command_jadjac(bool isjac)
 	if(jadCreate(&jad, &jcp, NULL) != JAD_OK)
 		bail("failed jadCreate");
 
-	//write it out and close the jad
+	//open up the output stream
 	jadStream outstream;
 	if(jadstd_OpenStdio(&outstream,opt.outfile,"wb") != JAD_OK)
 		bail("failed opening output file");
-	jadDump(&jad,&outstream,isjac?1:0);
+
+	//start progress and dump the jad
+	s_ProgressManager.Start(length);
+	int result = jadDump(&jad,&outstream,isjac?1:0);
+
+	//close resources
+	s_ProgressManager.Stop();
 	jadstd_CloseStdio(&outstream);
 	jadClose(&jad);
 
-	s_ProgressManager.Stop();
+	if(result != JAD_OK)
+	{
+		verb("Cleaning up output file");
+		g_unlink(opt.outfile);
+	}
 
-	//make sure the last sctor is shut down
+	//make sure the last mirage sector is shut down
 	if(cc.sector != NULL)
 		g_object_unref(cc.sector);
 

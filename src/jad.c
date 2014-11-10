@@ -406,7 +406,9 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 		{
 			if(incp)
 			{
-				incp->callback(incp->opaque,s,(void**)&dataptr,(void**)subcodeptr);
+				int ret = incp->callback(incp->opaque,s,(void**)&dataptr,(void**)subcodeptr);
+				if(ret != JAD_OK)
+					return JAD_ERROR;
 			}
 			else
 			{
