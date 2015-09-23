@@ -130,7 +130,7 @@ void jadTOCEntry_Clear(jadTOCEntry* tocentry);
 //the callback used by libjad to fetch sector raw data when creating a jad/jac file
 //set a pointer to the sector and subcode buffer. subcode should be de-interleaved.
 //these pointers should stay stable until the next call to jadCreateCallback or until common sense tells you theyre done being used by libjad
-typedef int (*jadCreateCallback)(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer);
+typedef int (*jadCreateReadCallback)(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer);
 
 //the params struct used for jadCreate
 //do not modify this while the context created by jadCreate is still open. moreover, the tocEntries struct must remain intact.
@@ -140,7 +140,7 @@ typedef struct jadCreationParams
 	int numTocEntries;
 	jadTOCEntry* tocEntries;
 	int numSectors;
-	jadCreateCallback callback;
+	jadCreateReadCallback callback;
 } jadCreationParams;
 
 

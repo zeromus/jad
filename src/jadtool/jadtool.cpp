@@ -1,9 +1,21 @@
-#include <mirage.h>
-#include <monolithic.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
 
 #include "jad.h"
 #include "jadstd.h"
+
+#include "ProgressManager.h"
+
+//I tried to separate the libmirage stuff but I don't have time now
+//the plan is to make it optional eventually (it is a MIGHTY dependency)
+#include <mirage.h>
+#include "api_libmirage.h"
+
+#ifdef _MSC_VER
+#define stricmp _stricmp
+int vasprintf(char **strp, const char *fmt, va_list ap);
+#endif
 
 /*
 Issue a series of commands and arguments
@@ -14,31 +26,6 @@ mirage <in|out|inout> - disregards jadtool choice and requires use of libmirage
 test <infile> - tests the infile, which must be a jad or jac, for hash
 */
 
-#ifdef _MSC_VER
-#include <wchar.h>
-#define stricmp _stricmp
-extern "C" void g_clock_win32_init();
-extern "C" void g_thread_win32_init();
-extern "C" void glib_init();
-static void msc_libmirage_init()
-{
-	//initialization that glib dlls would normally do, approximately
-	g_clock_win32_init();
-	g_thread_win32_init();
-	glib_init();
-	g_type_init();
-
-	//special for us because we use monolithic libmirage
-	mirage_preinitialize_monolithic();
-}
-static void msc_init()
-{
-	//work around some kind of linking error from libintl
-	volatile void* blech = &wmemcpy;
-}
-#endif
-
-
 struct Options {
 	bool verbose;
 	bool mirage_in, mirage_out;
@@ -46,115 +33,23 @@ struct Options {
 } opt;
 
 
-class ProgressManager
-{
-public:
-	ProgressManager()
-		: mRunning(false)
-	{ }
-
-	void Start(int totalWork)
-	{
-		mSize = totalWork;
-		mCurr = 0;
-		mLastPct = 0;
-		mRunning = true;
-	}
-
-	void Stop()
-	{
-		mRunning = false;
-		printf("\n");
-	}
-
-	void Tick()
-	{
-		mCurr++;
-		int currPct = mCurr*100/(mSize);
-		for(int i=mLastPct+1;i<=currPct;i++)
-		{
-			if(i%10==0)
-			{
-				printf(" %d%%",i/10*10);
-				if(i==50) printf("\n");
-				else printf(" ");
-			}
-			else printf(".");
-			mLastPct = currPct;
-		}
-	}
-
-	int mSize, mCurr, mLastPct;
-	bool mRunning;
-
-	void TryNewline()
-	{
-		if(!mRunning) return;
-		printf("\n");
-	}
-
-} s_ProgressManager;
-
-static bool gerrprint(GError* error)
-{
-	if(!error) return false;
-	s_ProgressManager.TryNewline();
-	printf("LM:Error %d %d - %s\n",error->code,error->domain,error->message);
-	return true;
-}
-
-static void gbailif(GError* error)
-{
-	if(gerrprint(error))
-	exit(error->code);
-}
 
 static void verb(const char* msg, ...)
 {
 	if(!opt.verbose) return;
   va_list ap;
   va_start(ap, msg); 
-	gchar* str;
-	g_vasprintf(&str,msg,ap);
-	s_ProgressManager.TryNewline();
+	char* str;
+	vasprintf(&str,msg,ap);
+	g_ProgressManager.TryNewline();
 	printf("JT:%s\n",str);
 }
 
 static void bail(const char* msg)
 {
-	s_ProgressManager.TryNewline();
+	g_ProgressManager.TryNewline();
 	printf("JT:BAILING!\nJT:%s\n",msg);
 	exit(1);
-}
-
-static void LibmirageVerboseLog(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
-{
-	s_ProgressManager.TryNewline();
-	printf("LM:%s",message);
-}
-
-static void LibmirageSyncVerbose()
-{
-	if(!opt.mirage_in && !opt.mirage_out) return;
-	g_log_set_handler (NULL, (GLogLevelFlags)(G_LOG_LEVEL_DEBUG), opt.verbose?LibmirageVerboseLog:NULL, NULL);
-}
-
-static void LibmirageInit()
-{
-	static bool initialized = false;
-	if(initialized) return;
-
-	initialized = true;
-
-	#ifdef _MSC_VER
-		msc_libmirage_init();
-	#endif
-
-	GError* error = NULL;
-	mirage_initialize(&error);
-	gbailif(error);
-
-	LibmirageSyncVerbose();
 }
 
 class ArgQueue
@@ -189,8 +84,6 @@ public:
 	}
 };
 
-
-
 struct CreateContext
 {
 	CreateContext() 
@@ -202,11 +95,13 @@ struct CreateContext
 	MirageSector* sector;
 };
 
+//delivers sectors to the library when theyre requested for encoding.
+//management of the sector buffers is tricky.
 static int myJadCreateCallback(void* opaque, int sectorNumber, void** sectorBuffer, void **subcodeBuffer)
 {
 	CreateContext* ctx = (CreateContext*)opaque;
 
-	s_ProgressManager.Tick();
+	g_ProgressManager.Tick();
 
 	//close the old sector, since the buffer is done being used
 	if(ctx->sector != NULL)
@@ -237,7 +132,8 @@ void command_jadjac(bool isjac)
 {
 	//for now, thats just how it is
 	opt.mirage_in = true;
-	LibmirageInit();
+	Libmirage_Init();
+	Libmirage_SyncVerbose(opt.verbose);
 
 	GError *error = NULL;
 
@@ -257,7 +153,7 @@ void command_jadjac(bool isjac)
 	gint length = mirage_disc_layout_get_length(disc);
 	verb("Disc length: %d sectors",length);
 
-	//well... i dont know. i guess we'll skip the lead-in, or else we read too many sectors next
+	//well... i dont know. i guess we'll skip the track 1 pregap, or else we read too many sectors next
 	length -= 150;
 
 	//libjad will fire callbacks, so this will track our process state
@@ -283,18 +179,18 @@ void command_jadjac(bool isjac)
 		bail("failed opening output file");
 
 	//start progress and dump the jad
-	s_ProgressManager.Start(length);
+	g_ProgressManager.Start(length);
 	int result = jadDump(&jad,&outstream,isjac?1:0);
 
 	//close resources
-	s_ProgressManager.Stop();
+	g_ProgressManager.Stop();
 	jadstd_CloseStdio(&outstream);
 	jadClose(&jad);
 
 	if(result != JAD_OK)
 	{
 		verb("Cleaning up output file");
-		g_unlink(opt.outfile);
+		remove(opt.outfile);
 	}
 
 	//make sure the last mirage sector is shut down
@@ -308,18 +204,10 @@ int main(int argc, char** argv)
 {
 	ArgQueue aq(argc,argv);
 
-
-	#ifdef _MSC_VER
-		msc_init();
-	#endif
-
 	while(aq.curr())
 	{
 		if(aq.is("v"))
-		{
 			opt.verbose = true;
-			LibmirageSyncVerbose();
-		}
 		else if(aq.is("mirage"))
 		{
 			aq.next();
@@ -331,7 +219,7 @@ int main(int argc, char** argv)
 				opt.mirage_in = opt.mirage_out = true;
 			else bail("unknown argument to `mirage` command");
 			if(opt.mirage_in || opt.mirage_out)
-				LibmirageInit();
+				Libmirage_Init();
 		}
 		else if(aq.is("jad") || aq.is("jac"))
 		{

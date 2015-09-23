@@ -11,7 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\jadtool\api_libmirage.cpp" />
     <ClCompile Include="..\..\src\jadtool\jadtool.cpp" />
+    <ClCompile Include="..\..\src\jadtool\ProgressManager.cpp" />
     <ClCompile Include="msvc_hacks\msvc_c.c" />
     <ClCompile Include="msvc_hacks\msvc_cpp.cpp" />
   </ItemGroup>
@@ -19,6 +21,10 @@
     <ProjectReference Include="jad.vcxproj">
       <Project>{b3a29fa1-e09c-4bad-8dfd-cb8debdd7bc2}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\jadtool\api_libmirage.h" />
+    <ClInclude Include="..\..\src\jadtool\ProgressManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6340ADE2-AD16-4BDA-B8F6-D57D9A3BAF79}</ProjectGuid>

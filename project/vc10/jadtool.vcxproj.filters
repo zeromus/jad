@@ -8,10 +8,16 @@
     <ClCompile Include="msvc_hacks\msvc_c.c">
       <Filter>msvc_hacks</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\jadtool\api_libmirage.cpp" />
+    <ClCompile Include="..\..\src\jadtool\ProgressManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="msvc_hacks">
       <UniqueIdentifier>{9f60b4d7-7edf-4dec-99fc-d9f139b58c6c}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\jadtool\ProgressManager.h" />
+    <ClInclude Include="..\..\src\jadtool\api_libmirage.h" />
   </ItemGroup>
 </Project>
