@@ -1,0 +1,4 @@
+[submodule "project/vc10/cdemu"]
+	path = project/vc10/cdemu
+	url = http://git.code.sf.net/u/zeromus/cdemu
+	branch = msvc
