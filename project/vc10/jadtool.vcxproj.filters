@@ -1,15 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\src\jadtool\jadtool.cpp" />
     <ClCompile Include="msvc_hacks\msvc_cpp.cpp">
       <Filter>msvc_hacks</Filter>
     </ClCompile>
     <ClCompile Include="msvc_hacks\msvc_c.c">
       <Filter>msvc_hacks</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\jadtool\api_libmirage.cpp" />
-    <ClCompile Include="..\..\src\jadtool\ProgressManager.cpp" />
+    <ClCompile Include="..\..\jadtool\jadtool.cpp" />
+    <ClCompile Include="..\..\jadtool\api_libmirage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="msvc_hacks">
@@ -17,7 +16,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\jadtool\ProgressManager.h" />
-    <ClInclude Include="..\..\src\jadtool\api_libmirage.h" />
+    <ClInclude Include="..\..\jadtool\ProgressManager.h" />
+    <ClInclude Include="..\..\jadtool\api_libmirage.h" />
+    <ClInclude Include="..\..\jadtool\jadtool.h" />
   </ItemGroup>
 </Project>

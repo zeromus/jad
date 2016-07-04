@@ -1,40 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="..\..\src\jad.h" />
-    <ClInclude Include="..\..\src\jadstd.h" />
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_config.h">
+    <ClInclude Include="..\..\libjad\jad.h" />
+    <ClInclude Include="..\..\libjad\jadcodec_heatshrink.h" />
+    <ClInclude Include="..\..\libjad\jadq.h" />
+    <ClInclude Include="..\..\libjad\jadstd.h" />
+    <ClInclude Include="..\..\libjad\jadtest.h" />
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_config.h">
       <Filter>heatshrink</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_decoder.h">
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_decoder.h">
       <Filter>heatshrink</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_encoder.h">
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_encoder.h">
       <Filter>heatshrink</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_common.h">
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_common.h">
       <Filter>heatshrink</Filter>
     </ClInclude>
-    <ClInclude Include="stdbool.h" />
-    <ClInclude Include="..\..\src\jadcodec_heatshrink.h" />
-    <ClInclude Include="..\..\src\jadq.h" />
-    <ClInclude Include="..\..\src\jadtest.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\jadstd.c" />
-    <ClCompile Include="..\..\src\jad.c" />
-    <ClCompile Include="..\..\src\heatshrink\heatshrink_decoder.c">
+    <ClCompile Include="..\..\libjad\jadcodec_heatshrink.c" />
+    <ClCompile Include="..\..\libjad\jadq.c" />
+    <ClCompile Include="..\..\libjad\jadstd.c" />
+    <ClCompile Include="..\..\libjad\jadtest.c" />
+    <ClCompile Include="..\..\libjad\jad.c" />
+    <ClCompile Include="..\..\libjad\heatshrink\heatshrink_decoder.c">
       <Filter>heatshrink</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\heatshrink\heatsink_encoder.c">
+    <ClCompile Include="..\..\libjad\heatshrink\heatsink_encoder.c">
       <Filter>heatshrink</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\jadcodec_heatshrink.c" />
-    <ClCompile Include="..\..\src\jadq.c" />
-    <ClCompile Include="..\..\src\jadtest.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\jad.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="heatshrink">

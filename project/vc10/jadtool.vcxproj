@@ -11,9 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\jadtool\api_libmirage.cpp" />
-    <ClCompile Include="..\..\src\jadtool\jadtool.cpp" />
-    <ClCompile Include="..\..\src\jadtool\ProgressManager.cpp" />
+    <ClCompile Include="..\..\jadtool\api_libmirage.cpp" />
+    <ClCompile Include="..\..\jadtool\jadtool.cpp" />
     <ClCompile Include="msvc_hacks\msvc_c.c" />
     <ClCompile Include="msvc_hacks\msvc_cpp.cpp" />
   </ItemGroup>
@@ -21,10 +20,14 @@
     <ProjectReference Include="jad.vcxproj">
       <Project>{b3a29fa1-e09c-4bad-8dfd-cb8debdd7bc2}</Project>
     </ProjectReference>
+    <ProjectReference Include="libjadvac.vcxproj">
+      <Project>{8bfeede4-fba3-43b4-9490-e841f3a31e5c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\jadtool\api_libmirage.h" />
-    <ClInclude Include="..\..\src\jadtool\ProgressManager.h" />
+    <ClInclude Include="..\..\jadtool\api_libmirage.h" />
+    <ClInclude Include="..\..\jadtool\jadtool.h" />
+    <ClInclude Include="..\..\jadtool\ProgressManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6340ADE2-AD16-4BDA-B8F6-D57D9A3BAF79}</ProjectGuid>
@@ -36,7 +39,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -71,16 +74,17 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;cdemu/libmirage;cdemu/libmirage/mirage;cdemu/libmirage/project/vc12;cdemu/libmirage/project/vc12/glib/include;../../src</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>JADTOOL_BUILD_API_LIBMIRAGE;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;cdemu/libmirage;cdemu/libmirage/mirage;cdemu/libmirage/project/vs2015;cdemu/libmirage/project/vs2015/glib/include;../../libjad</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>cdemu/libmirage/project/vc12/debug/libmirage-monolithic.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>false</GenerateMapFile>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/IGNORE:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

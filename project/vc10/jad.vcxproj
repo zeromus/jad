@@ -11,28 +11,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_common.h" />
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_config.h" />
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_decoder.h" />
-    <ClInclude Include="..\..\src\heatshrink\heatshrink_encoder.h" />
-    <ClInclude Include="..\..\src\jad.h" />
-    <ClInclude Include="..\..\src\jadcodec_heatshrink.h" />
-    <ClInclude Include="..\..\src\jadq.h" />
-    <ClInclude Include="..\..\src\jadstd.h" />
-    <ClInclude Include="..\..\src\jadtest.h" />
-    <ClInclude Include="stdbool.h" />
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_common.h" />
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_config.h" />
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_decoder.h" />
+    <ClInclude Include="..\..\libjad\heatshrink\heatshrink_encoder.h" />
+    <ClInclude Include="..\..\libjad\jad.h" />
+    <ClInclude Include="..\..\libjad\jadcodec_heatshrink.h" />
+    <ClInclude Include="..\..\libjad\jadq.h" />
+    <ClInclude Include="..\..\libjad\jadstd.h" />
+    <ClInclude Include="..\..\libjad\jadtest.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\heatshrink\heatshrink_decoder.c" />
-    <ClCompile Include="..\..\src\heatshrink\heatsink_encoder.c" />
-    <ClCompile Include="..\..\src\jad.c" />
-    <ClCompile Include="..\..\src\jadcodec_heatshrink.c" />
-    <ClCompile Include="..\..\src\jadq.c" />
-    <ClCompile Include="..\..\src\jadstd.c" />
-    <ClCompile Include="..\..\src\jadtest.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\jad.txt" />
+    <ClCompile Include="..\..\libjad\heatshrink\heatshrink_decoder.c" />
+    <ClCompile Include="..\..\libjad\heatshrink\heatsink_encoder.c" />
+    <ClCompile Include="..\..\libjad\jad.c" />
+    <ClCompile Include="..\..\libjad\jadcodec_heatshrink.c" />
+    <ClCompile Include="..\..\libjad\jadq.c" />
+    <ClCompile Include="..\..\libjad\jadstd.c" />
+    <ClCompile Include="..\..\libjad\jadtest.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B3A29FA1-E09C-4BAD-8DFD-CB8DEBDD7BC2}</ProjectGuid>
@@ -44,7 +40,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>

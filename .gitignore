@@ -5,3 +5,5 @@
 /project/vc10/*.sdf
 /project/vc10/*.suo
 /privatedevstuff
+/project/vc10/.vs/jadtool/v14/*.suo
+/project/vc10/.vs/jad/v14/*.suo
