@@ -18,14 +18,18 @@ Issue a series of commands and arguments to be executed in order
 v - enable verbose debugging
 jad <infile> <outfile> - converts infile to outfile in jad format
 jac <infile> <outfile> - converts infile to outfile in jac format
-in/out/inout <jad|vac|mirage|mednafen> - set API to be used for IO. default: jad.
+in/out/inout <jad|vac|mirage|mednafen> - demands specified API to be used for IO
 test <infile> - tests the infile, which must be a jad or jac, for hash
+
+note: the output API may seem pointless now (since this tool can only convert to jad/jac)
+however, in the future, we may at least support writing cue+bin or ccd via libjadvac for comparison purposes
 */
 
-#if JADTOOL_BUILD_API_LIBMIRAGE
-	int jt_api_libmirage_start(Options *opt, jadCreationParams *jcp);
-	int jt_api_libmirage_end(Options *opt, jadCreationParams *jcp);
-#endif
+//any of these may not exist, but they wont be referenced unless the correct compile options are issued
+int jt_api_libmirage_start(Options *opt, jadCreationParams *jcp);
+int jt_api_libmirage_end(Options *opt, jadCreationParams *jcp);
+int jt_api_libjadvac_start(Options *opt, jadCreationParams *jcp);
+int jt_api_libjadvac_end(Options *opt, jadCreationParams *jcp);
 
 ProgressManager g_ProgressManager;
 Options opt;
@@ -90,10 +94,13 @@ void command_jadjac(bool isjac)
 			jt_api_libmirage_start(&opt,&jcp);
 		#endif
 	}
-	else
+	if (opt.in == JAD_API_VAC)
 	{
-		bail("no input api specified");
+		#if JADTOOL_BUILD_API_LIBJADVAC
+			jt_api_libjadvac_start(&opt,&jcp);
+		#endif
 	}
+
 
 	//create the jad context
 	jadContext jad;
@@ -126,13 +133,32 @@ void command_jadjac(bool isjac)
 			jt_api_libmirage_end(&opt,&jcp);
 		#endif
 	}
+	if (opt.in == JAD_API_VAC)
+	{
+		#if JADTOOL_BUILD_API_LIBJADVAC
+			jt_api_libjadvac_end(&opt,&jcp);
+		#endif
+	}
+}
+
+static void validate_api()
+{
+	#if !JADTOOL_BUILD_API_LIBMIRAGE
+		if(opt.in == JAD_API_MIRAGE || opt.out == JAD_API_MIRAGE) bail("libmirage disc IO support not compiled in");
+	#endif
+	#if !JADTOOL_BUILD_API_MEDNAFEN
+		if (opt.in == JAD_API_MEDNAFEN || opt.out == JAD_API_MEDNAFEN) bail("mednafen disc IO support not compiled in");
+	#endif
+	#if !JADTOOL_BUILD_API_LIBJADVAC
+		if (opt.in == JAD_API_VAC || opt.out == JAD_API_VAC) bail("libjadvac disc IO support not compiled in");
+	#endif
 }
 
 int main(int argc, char** argv)
 {
 	ArgQueue aq(argc,argv);
 
-#define APICHECK \
+#define APICHECK() \
 	(aq.is("mirage")) ? JAD_API_MIRAGE : ( \
 		(aq.is("mednafen")) ? JAD_API_MEDNAFEN : ( \
 			(aq.is("vac")) ? JAD_API_VAC : ( \
@@ -145,15 +171,18 @@ int main(int argc, char** argv)
 			opt.verbose = true;
 		else if (aq.is("in"))
 		{
-			if ((opt.in = APICHECK) == JAD_API_NONE) bail("unknown argument to `in` command");
+			aq.next();
+			if ((opt.in = APICHECK()) == JAD_API_NONE) bail("unknown argument to `in` command");
 		}
 		else if (aq.is("out"))
 		{
-			if ((opt.out = APICHECK) == JAD_API_NONE) bail("unknown argument to `in` command");
+			aq.next();
+			if ((opt.out = APICHECK()) == JAD_API_NONE) bail("unknown argument to `in` command");
 		}
 		else if (aq.is("inout"))
 		{
-			if ((opt.in = opt.out = APICHECK) == JAD_API_NONE) bail("unknown argument to `in` command");
+			aq.next();
+			if ((opt.in = opt.out = APICHECK()) == JAD_API_NONE) bail("unknown argument to `in` command");
 		}
 		else if(aq.is("jad") || aq.is("jac"))
 		{
@@ -161,8 +190,11 @@ int main(int argc, char** argv)
 			opt.infile = aq.next();
 			opt.outfile = aq.next();
 
-			//temporary:
-			opt.in = JAD_API_MIRAGE;
+			//auto-select API when non specified
+			if(opt.in == JAD_API_NONE) opt.in = JAD_API_VAC;
+			if (opt.out == JAD_API_NONE) opt.out = JAD_API_JAD;
+
+			validate_api();
 
 			if(!opt.infile || !opt.outfile)
 				bail("jad/jac command missing infile and outfile");

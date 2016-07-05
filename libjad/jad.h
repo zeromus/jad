@@ -80,7 +80,7 @@ typedef int (*jadStreamFlush)(jadStream* stream);
 
 //in case we need it
 typedef void* (*jadAllocatorAlloc)(int amt, int alignment);
-typedef void* (*jadAllocatorFree)(void* ptr); 
+typedef void* (*jadAllocatorFree)(void* ptr);
 
 //a stdio-like stream to be used for random access. fill it with function pointers and pass to jadOpen
 struct jadStream
@@ -112,6 +112,7 @@ typedef struct jadTimestamp
 //one sector of data in the 2448 byte raw JAD format
 struct jadSector
 {
+	//nonstandard anonymous struct syntax. does anyone actually have a compiler that can't handle it?
 	union {
 		struct {
 			uint8_t data[2352];
@@ -144,7 +145,7 @@ typedef struct jadCreationParams
 } jadCreationParams;
 
 
-//the context for JAD-io operations. 
+//the context for JAD-io operations.
 //consider it as opaque (full declaration provided for easier static allocation)
 //create with jadOpen, etc.
 struct jadContext

@@ -12,8 +12,8 @@ enum JAD_API {
 struct Options {
 	Options()
 		: verbose(false)
-		, in(JAD_API_JAD)
-		, out(JAD_API_JAD)
+		, in(JAD_API_NONE)
+		, out(JAD_API_NONE)
 		, infile(nullptr)
 		, outfile(nullptr)
 	{

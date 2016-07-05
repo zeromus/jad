@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\jadtool\api_libjadvac.cpp" />
     <ClCompile Include="..\..\jadtool\api_libmirage.cpp" />
     <ClCompile Include="..\..\jadtool\jadtool.cpp" />
     <ClCompile Include="msvc_hacks\msvc_c.c" />
@@ -25,7 +26,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\jadtool\api_libmirage.h" />
     <ClInclude Include="..\..\jadtool\jadtool.h" />
     <ClInclude Include="..\..\jadtool\ProgressManager.h" />
   </ItemGroup>
@@ -74,7 +74,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>JADTOOL_BUILD_API_LIBMIRAGE;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JADTOOL_BUILD_API_LIBJADVAC;JADTOOL_BUILD_API_LIBMIRAGE;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;cdemu/libmirage;cdemu/libmirage/mirage;cdemu/libmirage/project/vs2015;cdemu/libmirage/project/vs2015/glib/include;../../libjad</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
