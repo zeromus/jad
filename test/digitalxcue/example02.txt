@@ -1,0 +1,5 @@
+Example 02
+
+Audio disc from multiple source files (one track per file) with no “pause areas” between tracks. Note: You can “mix and match” different audio filetypes within the same cue sheet (WAVE, AIFF, MP3, etc).
+
+The files will be recorded continuously with no gaps between them. However, if any file is not an exact multiple of the CDROM sector size (2352 bytes), then the last sector will be automatically padded with zeros. This could result in a gap between tracks with a maximum length of 1/75th second.

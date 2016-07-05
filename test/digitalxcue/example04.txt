@@ -1,0 +1,5 @@
+Example 04
+
+Audio disc with “pause areas” between tracks.
+
+Pause areas are written with data from the current file. It is not required that this data be “digital silence” (all zeros). The first track always begins with a mandatory two second pregap. This is required by the CDROM specification and is generated automatically by the software.

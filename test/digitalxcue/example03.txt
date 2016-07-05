@@ -1,0 +1,6 @@
+Example 03
+
+Audio disc using multiple data files (multiple tracks per file) with no “pause areas” between tracks.
+
+(*1) (Footnote on track 5's index 01)
+All times are relative to the beginning of the current file

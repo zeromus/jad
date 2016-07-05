@@ -1,0 +1,5 @@
+Example 05
+
+Using the PREGAP command.
+
+The data that is written as a result of any PREGAP command is always generated internally by your cdr writing program (the data is not consumed from the current file). It is possible to mix the source of the pregaps as shown in TRACK 03… one second of pregap will be generated internally and another second will be consumed from the file. All pregaps that are generated internally contain “digital silence” (all zeros).
