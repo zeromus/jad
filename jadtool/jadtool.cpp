@@ -34,6 +34,17 @@ int jt_api_libjadvac_end(Options *opt, jadCreationParams *jcp);
 ProgressManager g_ProgressManager;
 Options opt;
 
+//setup an allocator for libjad (and libjadvac)
+static void* myMalloc(jadAllocator* allocator, size_t amt) { return malloc(amt); }
+static void* myRealloc(jadAllocator* allocator, void* ptr, size_t amt) { return realloc(ptr,amt); }
+static void myFree(jadAllocator* allocator, void* ptr) { free(ptr); }
+static jadAllocator allocator = {
+	NULL,
+	&myMalloc,
+	&myRealloc,
+	&myFree
+};
+
 void verb(const char* msg, ...)
 {
 	if(!opt.verbose) return;
@@ -87,6 +98,7 @@ public:
 void command_jadjac(bool isjac)
 {
 	jadCreationParams jcp;
+	jcp.allocator = &allocator;
 
 	if(opt.in == JAD_API_MIRAGE)
 	{
@@ -104,7 +116,7 @@ void command_jadjac(bool isjac)
 
 	//create the jad context
 	jadContext jad;
-	if(jadCreate(&jad, &jcp, NULL) != JAD_OK)
+	if(jadCreate(&jad, &jcp, &allocator) != JAD_OK)
 		bail("failed jadCreate");
 
 	//open up the output stream

@@ -79,8 +79,9 @@ typedef int (*jadStreamPut)(jadStream* stream, uint8_t val);
 typedef int (*jadStreamFlush)(jadStream* stream);
 
 //in case we need it
-typedef void* (*jadAllocatorAlloc)(int amt, int alignment);
-typedef void* (*jadAllocatorFree)(void* ptr);
+typedef void* (*jadAllocatorAlloc)(jadAllocator* allocator, size_t amt);
+typedef void* (*jadAllocatorRealloc)(jadAllocator* allocator, void* ptr, size_t amt);
+typedef void (*jadAllocatorFree)(jadAllocator* allocator, void* ptr);
 
 //a stdio-like stream to be used for random access. fill it with function pointers and pass to jadOpen
 struct jadStream
@@ -99,6 +100,7 @@ typedef struct jadAllocator
 {
 	void* opaque;
 	jadAllocatorAlloc alloc;
+	jadAllocatorRealloc realloc;
 	jadAllocatorFree free;
 } jadAllocator;
 
@@ -135,11 +137,13 @@ typedef int (*jadCreateReadCallback)(void* opaque, int sectorNumber, void** sect
 
 //the params struct used for jadCreate
 //do not modify this while the context created by jadCreate is still open. moreover, the tocEntries struct must remain intact.
+//TODO: this is really more of a 'read-write mounted disc' structure. It's what gets used when mounting a disc through libjadvac. so, rename it?
 typedef struct jadCreationParams
 {
 	void* opaque;
 	int numTocEntries;
 	jadTOCEntry* tocEntries;
+	jadAllocator* allocator;
 	int numSectors;
 	jadCreateReadCallback callback;
 } jadCreationParams;

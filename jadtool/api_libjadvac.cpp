@@ -27,7 +27,7 @@ int jt_api_libjadvac_start(Options *opt, jadCreationParams *jcp)
 		jadStream instream;
 		if (jadstd_OpenStdio(&instream, opt->infile, "rb") != JAD_OK)
 			bail("failed opening input cuefile");
-		jadvacOpenFile_cue(&ctx,&instream, NULL);
+		jadvacOpenFile_cue(&ctx,&instream,jcp->allocator);
 	}
 	////libjad will fire callbacks, so this will track our process state
 	//CreateContext *cc = new CreateContext();
