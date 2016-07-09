@@ -78,7 +78,7 @@ typedef int (*jadStreamPut)(jadStream* stream, uint8_t val);
 //just used for codec flushing
 typedef int (*jadStreamFlush)(jadStream* stream);
 
-//in case we need it
+//callbacks for jadAllocator operations
 typedef void* (*jadAllocatorAlloc)(jadAllocator* allocator, size_t amt);
 typedef void* (*jadAllocatorRealloc)(jadAllocator* allocator, void* ptr, size_t amt);
 typedef void (*jadAllocatorFree)(jadAllocator* allocator, void* ptr);
@@ -95,7 +95,7 @@ struct jadStream
 	jadStreamFlush flush;
 };
 
-//a simple memory allocator interface, in case we need it
+//a simple memory allocator interface
 typedef struct jadAllocator
 {
 	void* opaque;

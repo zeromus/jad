@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "jadvac.h"
 #include "../libjad/jad.h"
 
 typedef struct StringBuffer
@@ -140,19 +141,19 @@ static int checktoken(StringBuffer* sb, const char* target)
 
 //opens a jadContext, which gets its data from the provided stream (containing a cue file) and allocator
 //TODO: pass in other things, like a subfile resolver
-int jadvacOpenFile_cue(jadContext* jad, jadStream* stream, jadAllocator* allocator)
+int jadvacOpenFile_cue(struct jadvacContext* ctx)
 {
 	int c;
+	jadStream currFile = {0};
 	CueLexer _L = {0}, *L = &_L;
-	L->allocator = allocator;
+	L->allocator = ctx->allocator;
 	L->lastc = '\n';
-	L->stream = stream;
+	L->stream = ctx->stream;
 	sb_init(L,&L->buffer);
 
 	READ();
 	SKIPWHITESPACE();
 	READTOKEN();
-
 
 	if(checktoken(&L->buffer,"FILE"))
 	{
@@ -160,6 +161,7 @@ int jadvacOpenFile_cue(jadContext* jad, jadStream* stream, jadAllocator* allocat
 		SKIPWHITESPACE();
 		READSTRING();
 		printf("%s\n",L->buffer.buf);
+		ctx->fs->open(ctx->fs,&currFile,L->buffer.buf);
 	}
 
 	return JAD_OK;

@@ -5,6 +5,7 @@
 #include "jad.h"
 #include "jadstd.h"
 #include "jadtool.h"
+#include "../libjadvac/jadvac.h"
 
 #include "ProgressManager.h"
 

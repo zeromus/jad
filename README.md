@@ -14,3 +14,5 @@ It is similar to but less powerful than MAME's CHD system.
 These JAC files are not necessarily supposed to be distributed directly, although that would be nice. Rather, they are designed to to be a representation of the disc suitable for hardware emulation.  Users would most likely convert other disc images to this format as an offline process.
 
 The project is comprised of three parts: libjad, which solely implements the JAD/JAC formats; libjadvac which implements readers for other formats (cue,ccd) and conditionally encompasses much bulkier dependencies like libavcodec, etc. for decoding audio; and jadtool, which converts discs to JAD/JAC format. The intention is that libjad would be used on its own by most projects, libjadvac additionally by projects unwilling to require use of JAD/JAC files, and jadtool not used at all by other projects, but rather by end-users.
+
+The libjadvac and libjad sources are written in beautiful archaic 1990-era C with no dependencies, to maximize portability.  Jadtool is written in an archaic dialect of C++.
