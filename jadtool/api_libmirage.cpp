@@ -7,10 +7,6 @@
 #include "jadtool.h"
 #include "../libjad/jad.h"
 
-#ifdef _MSC_VER
-#pragma comment(lib,"cdemu/libmirage/project/vs2015/debug/libmirage-monolithic.lib")
-#endif
-
 static void _LibmirageVerboseLog(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
 {
 	g_ProgressManager.TryNewline();

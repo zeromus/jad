@@ -18,6 +18,9 @@
     <ClCompile Include="msvc_hacks\msvc_cpp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="cdemu\libmirage\project\vs2015\libmirage-monolithic.vcxproj">
+      <Project>{e4c694fd-c9a2-40da-970c-2a9de05c9a22}</Project>
+    </ProjectReference>
     <ProjectReference Include="jad.vcxproj">
       <Project>{b3a29fa1-e09c-4bad-8dfd-cb8debdd7bc2}</Project>
     </ProjectReference>

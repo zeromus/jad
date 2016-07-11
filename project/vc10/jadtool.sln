@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jad", "jad.vcxproj", "{B3A2
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjadvac", "libjadvac.vcxproj", "{8BFEEDE4-FBA3-43B4-9490-E841F3A31E5C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmirage-monolithic", "cdemu\libmirage\project\vs2015\libmirage-monolithic.vcxproj", "{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,12 @@ Global
 		{8BFEEDE4-FBA3-43B4-9490-E841F3A31E5C}.Release|Win32.Build.0 = Release|Win32
 		{8BFEEDE4-FBA3-43B4-9490-E841F3A31E5C}.Release|x64.ActiveCfg = Release|x64
 		{8BFEEDE4-FBA3-43B4-9490-E841F3A31E5C}.Release|x64.Build.0 = Release|x64
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Debug|Win32.Build.0 = Debug|Win32
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Debug|x64.ActiveCfg = Debug|Win32
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Release|Win32.ActiveCfg = Release|Win32
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Release|Win32.Build.0 = Release|Win32
+		{E4C694FD-C9A2-40DA-970C-2A9DE05C9A22}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
