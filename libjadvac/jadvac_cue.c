@@ -143,7 +143,7 @@ static int checktoken(StringBuffer* sb, const char* target)
 //TODO: pass in other things, like a subfile resolver
 int jadvacOpenFile_cue(struct jadvacContext* ctx)
 {
-	int c;
+	int c, ret;
 	jadStream currFile = {0};
 	CueLexer _L = {0}, *L = &_L;
 	L->allocator = ctx->allocator;
@@ -161,7 +161,8 @@ int jadvacOpenFile_cue(struct jadvacContext* ctx)
 		SKIPWHITESPACE();
 		READSTRING();
 		printf("%s\n",L->buffer.buf);
-		ctx->fs->open(ctx->fs,&currFile,L->buffer.buf);
+		ret = ctx->fs->open(ctx->fs,&currFile,L->buffer.buf);
+		if(ret) return ret;
 	}
 
 	return JAD_OK;

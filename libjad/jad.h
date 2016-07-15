@@ -19,6 +19,7 @@ typedef int jadError;
 #define JAD_OK 0
 #define JAD_EOF -1
 #define JAD_ERROR -2
+#define JAD_ERROR_FILE_NOT_FOUND -3
 
 //type forward declarations
 typedef struct jadSubchannelQ jadSubchannelQ;
@@ -177,6 +178,11 @@ int jadDump(jadContext* jad, jadStream* stream, int JACIT);
 int jadClose(jadContext* jad);
 
 void jadTimestamp_increment(jadTimestamp* ts);
+
+//general portability utilities for libjad and friends
+size_t jadutil_strlcpy(char *dst, const char *src, size_t size);
+size_t jadutil_strlcat(char *dst, const char *src, size_t size);
+const char *jadutil_strrchr(const char* src, size_t len, char c);
 
 #ifdef  __cplusplus
 }

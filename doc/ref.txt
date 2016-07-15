@@ -1,6 +1,11 @@
 check out the complex 'prior art' for our format here
 https://github.com/mamedev/mame/blob/bcd0656824540c60a8c24d023d10e19e2f60e795/src/lib/util/chd.h
+libcdio also...
 
-put a list of codecs to study here
+put a list of codecs to study here (but we've settled on heatshrink)
 http://spin.atomicobject.com/2013/03/14/heatshrink-embedded-data-compression/
 https://code.google.com/p/lz4/
+
+sources of test cues:
+https://sourceforge.net/p/cuetoolsnet/code/ci/default/tarball
+some odball stuff in http://www.linuxfromscratch.org/blfs/view/svn/multimedia/libcdio.html

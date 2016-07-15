@@ -1,6 +1,6 @@
 //IDEA: we might should split the sector into a several streams.. for now lets call it 'header' and 'codec'
 //the point being, several opcodes from the header portion will read data from the codec stream, which wont need to be interleaved with the opcode bytes.
-//this would allow us to keep the codec running without having to flush and re-initialize it.. 
+//this would allow us to keep the codec running without having to flush and re-initialize it..
 //BUT.. is there any reason to expect similarity between different sections of data? this would add some complexity to the logic.
 //but it may be a good idea for the types of encoders we use
 
@@ -41,7 +41,7 @@ int jadStaticInit()
 {
 	void jadq_InitCRC();
 	jadq_InitCRC();
-	
+
 	return JAD_OK;
 }
 
@@ -90,14 +90,14 @@ long _jadTell(struct jadStream* stream)
 int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocator* allocator)
 {
 	if(!jad || !stream) return JAD_ERROR;
-	
+
 	jad->allocator = allocator;
 	jad->stream = stream;
 	jad->createParams = NULL;
 
 	//TODO - better header reading and validation
 	//TODO - make an alternate codepath for safely blittable little endian systems to read in one piece
-	
+
 	//read what of the header we need
 	if(!_jadSeek(stream,OFS_FLAGS)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->flags)) return JAD_ERROR;
@@ -195,7 +195,7 @@ int _jadStreamEncode(void* buf, size_t amount, jadStream* codec, jadStream* outs
 }
 
 
-//2048 bytes packed into 2352: 
+//2048 bytes packed into 2352:
 //12 bytes sync(00 ff ff ff ff ff ff ff ff ff ff 00)
 //3 bytes sector address (min+A0),sec,frac //does this correspond to ccd `point` field in the TOC entries?
 //sector mode byte (0: silence; 1: 2048Byte mode (EDC,ECC,CIRC), 2: mode2 (could be 2336[vanilla mode2], 2048[xa mode2 form1], 2324[xa mode2 form2])
@@ -337,7 +337,7 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	_jadWrite32(outs,jad->numTocEntries);
 	_jadWrite32(outs,0); //reserved for CRC
 	_jadWrite32(outs,0); //reserved for ??
-	
+
 	//copy the TOC to output
 	if(incp)
 	{
@@ -378,7 +378,7 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 		{
 			//save the current outs position for writing sectors at
 			long pos = _jadTell(outs);
-		
+
 			//write the index entry for this sector
 			_jadSeek(outs,ofsIndex+s*4);
 			_jadWrite32(outs,(uint32_t)pos);
@@ -416,7 +416,7 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 					return JAD_ERROR;
 			}
 		}
-		
+
 		//compress or dump the sector, as appropriate
 		if(JACIT)
 		{
@@ -453,3 +453,55 @@ void jadTimestamp_increment(jadTimestamp* ts)
 	}
 }
 
+#ifdef _MSC_VER
+//http://opensource.apple.com/source/OpenSSH/OpenSSH-7.1/openssh/bsd-strlcat.c
+//TODO: rewrite for new license
+size_t jadutil_strlcat(char *dst, const char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+	size_t dlen;
+
+	/* Find the end of dst and adjust bytes left but don't go past end */
+	while (*d != '\0' && n-- != 0)
+		d++;
+	dlen = d - dst;
+	n = siz - dlen;
+
+	if (n == 0)
+		return(dlen + strlen(s));
+	while (*s != '\0') {
+		if (n != 1) {
+			*d++ = *s;
+			n--;
+		}
+		s++;
+	}
+	*d = '\0';
+
+	return(dlen + (s - src));	/* count does not include NUL */
+}
+#else
+size_t jadutil_strlcpy(char *dst, const char *src, size_t size)
+{
+	return strlcpy(dst,src,size);
+}
+size_t jadutil_strlcat(char *dst, const char *src, size_t size)
+{
+	return strlcat(dst,src,size);
+}
+#endif
+
+//this function works a little differently from the normal strrchr. in case the length is known, it can save work
+const char *jadutil_strrchr(const char* src, size_t len, char c)
+{
+	const char* cp = src+len;
+	while(cp>=src)
+	{
+		if(*cp == c)
+			return cp;
+		cp--;
+	}
+	return NULL;
+}

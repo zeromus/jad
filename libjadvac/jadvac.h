@@ -1,6 +1,8 @@
 #ifndef JADVAC_H_
 #define JADVAC_H_
 
+#include <string.h>
+
 #include "../libjad/jad.h"
 
 #ifdef  __cplusplus
@@ -13,7 +15,7 @@ struct jadAllocator;
 
 //callback for a jadvacFilesystem's open operation.
 //any logic to attempt other extensions (e.g. myfile.bin.ecm instead of myfile.bin) is the responsibility of libjadbac
-//this callback's job is simply to open the file. however, it should process paths relative to the basefile (.cue, etc.)
+//this callback's job is simply to open the file. however, it should process filenames as relative to the basefile (.cue, etc.)
 //open files in "rb" mode.
 typedef int (*jadvacOpenFileCallback)(struct jadvacFilesystem* fs, struct jadStream* stream, const char* path);
 
@@ -36,6 +38,9 @@ typedef struct jadvacContext
 } jadvacContext;
 
 int jadvacOpenFile_cue(jadvacContext* ctx);
+
+//utilities
+const char *jadvac_strrchr(const char* src, size_t len, char c);
 
 #ifdef  __cplusplus
 }

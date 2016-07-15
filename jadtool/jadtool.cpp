@@ -14,18 +14,6 @@
 int vasprintf(char **strp, const char *fmt, va_list ap);
 #endif
 
-/*
-Issue a series of commands and arguments to be executed in order
-v - enable verbose debugging
-jad <infile> <outfile> - converts infile to outfile in jad format
-jac <infile> <outfile> - converts infile to outfile in jac format
-in/out/inout <jad|vac|mirage|mednafen> - demands specified API to be used for IO
-test <infile> - tests the infile, which must be a jad or jac, for hash
-
-note: the output API may seem pointless now (since this tool can only convert to jad/jac)
-however, in the future, we may at least support writing cue+bin or ccd via libjadvac for comparison purposes
-*/
-
 //any of these may not exist, but they wont be referenced unless the correct compile options are issued
 int jt_api_libmirage_start(Options *opt, jadCreationParams *jcp);
 int jt_api_libmirage_end(Options *opt, jadCreationParams *jcp);
@@ -167,6 +155,20 @@ static void validate_api()
 	#endif
 }
 
+static void command_version()
+{
+	printf("JADTOOL VERSION INFO\n");
+	#if JADTOOL_BUILD_API_LIBMIRAGE
+	printf("Built with LIBMIRAGE\n");
+	#endif
+	#if JADTOOL_BUILD_API_MEDNAFEN
+	printf("Built with MEDNAFEN\n");
+	#endif
+	#if JADTOOL_BUILD_API_LIBJADVAC
+	printf("Built with LIBJADVAC\n");
+	#endif
+}
+
 int main(int argc, char** argv)
 {
 	ArgQueue aq(argc,argv);
@@ -182,6 +184,11 @@ int main(int argc, char** argv)
 	{
 		if(aq.is("v"))
 			opt.verbose = true;
+		else if(aq.is("version"))
+		{
+			aq.next();
+			command_version();
+		}
 		else if (aq.is("in"))
 		{
 			aq.next();

@@ -20,28 +20,70 @@ static int _jadCreateCallback(void* opaque, int sectorNumber, void** sectorBuffe
 
 struct FilesystemContext
 {
-	std::string basedir;
+	Options *opt;
+	jadCreationParams *jcp;
+	size_t strlen_infile;
 };
 
-int myOpen(jadvacFilesystem* fs, jadStream* stream, const char* path)
+//determines the base directory of the given path
+static void myBasedir(char *path)
 {
-	int ret;
-	//TODO: more sophistication, for sure
+	//last = find_last_slash(path);
+	char *slash = strrchr(path, '/');
 
-	//first, try opening it directly as an absolute path
+	//unix can have backslashes so only check on windows
+	#ifdef _WIN32
+		if (!slash) slash = strrchr(path, '\\');
+	#endif
+
+	//libretro-common had more complex logic here for windows dealing with backslashes, I don't see why
+
+	if (slash)
+	{
+		//N.B. in case the slash was at the end of the path (and at the end of the buffer) there would certainly be room for a null terminator after it
+		slash[1] = 0;
+	}
+	else {
+		//libretro-common did this, maybe it's helpful for some reason
+		//maybe for maintaining the ends-with-/ invariant?
+		//the alternative is returning an empty path
+		strcpy(path, "./");
+	}
+}
+
+static int myOpen(jadvacFilesystem* fs, jadStream* stream, const char* path)
+{
+	static const size_t kPathBufLen = 1024;
+	char tmp[kPathBufLen];
+	int ret;
+
+	FilesystemContext* ctx = (FilesystemContext*)fs->opaque;
+
+	//first, try opening it directly as an absolute path (so we dont have to worry about the path resolving handling absolute paths)
 	ret = jadstd_OpenStdio(stream,path,"rb");
 	if(ret == JAD_OK) return JAD_OK;
 
-	//try doing it relative to the given filesystem
-	FilesystemContext* ctx = (FilesystemContext*)fs->opaque;
-	std::string trial = ctx->basedir + path;
+	//before doing any work with buffers, make sure we have room
+	if(ctx->strlen_infile >= kPathBufLen-1)
+		return JAD_ERROR;
 
-	ret = jadstd_OpenStdio(stream,trial.c_str(),"rb");
-	if(ret == JAD_OK) return JAD_OK;
+	//copy the infile, reduce it to a base directory
+	memcpy(tmp,ctx->opt->infile,ctx->strlen_infile);
+	tmp[ctx->strlen_infile] = 0;
+	myBasedir(tmp);
 
-	return JAD_ERROR;
+	//concatenate the given file, if we can
+	jadutil_strlcat(tmp,path,kPathBufLen);
+
+	//now try opening it
+	ret = jadstd_OpenStdio(stream,tmp,"rb");
+
+	if(ret) return ret;
+
+	return JAD_OK;
 }
-int myClose(jadvacFilesystem* fs, jadStream* stream)
+
+static int myClose(jadvacFilesystem* fs, jadStream* stream)
 {
 	return jadstd_CloseStdio(stream);
 }
@@ -49,20 +91,9 @@ int myClose(jadvacFilesystem* fs, jadStream* stream)
 int jt_api_libjadvac_start(Options *opt, jadCreationParams *jcp)
 {
 	FilesystemContext fscontext;
-	fscontext.basedir = opt->infile;
-
-	//this is not 100% reliable.. not an easy problem.. that's why it isn't built into libjadvac
-	//but uhhh maybe we want it to be an optional service, because.. it's not an easy problem.
-	const char* dirspot = strrchr(opt->infile,'/');
-	if(!dirspot) dirspot = strrchr(opt->infile,'\\');
-	if(dirspot)
-	{
-		fscontext.basedir.resize(dirspot-opt->infile+1); //leaves the path seperator
-	}
-	else
-	{
-		fscontext.basedir = "";
-	}
+	fscontext.jcp = jcp;
+	fscontext.opt = opt;
+	fscontext.strlen_infile = strlen(opt->infile);
 
 	jadvacFilesystem fs = {
 		&fscontext,
@@ -71,7 +102,7 @@ int jt_api_libjadvac_start(Options *opt, jadCreationParams *jcp)
 	};
 
 	//TODO- put utility in libjadvac to determine type from extension? or a utility to automatically select the right loader?
-	const char* dot = strrchr(opt->infile,'.');
+	const char* dot = jadutil_strrchr(opt->infile,fscontext.strlen_infile,'.');
 	if(!dot) bail("Can't determine filetype from extension");
 	if(tolower(dot[1]) == 'c' && tolower(dot[2]) == 'u' && tolower(dot[3]) == 'e' && !dot[4])
 	{
