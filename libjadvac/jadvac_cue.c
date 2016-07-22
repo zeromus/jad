@@ -152,57 +152,101 @@ static int checktoken(StringBuffer* sb, const char* target)
 //could provide better invalid character detection in tokens and strings instead of just truncating them
 #define READ() { c = read(L); }
 //placeholder for future diagnostic functionality
-#define BOMB(x, ...) { return JAD_ERROR; }
-#define SKIPWHITESPACE() while(c == ' ' || c == '\t' ||  c == '\n') READ();
-#define _READTOKEN() \
+#define BOMB(x, ...) { goto ERROR; }
+#define SKIPWHITESPACE() while(c == ' ' || c == '\t') READ();
+
+#define _READTOKEN() { \
+	SKIPWHITESPACE(); \
 	sb_reset(L,&L->buffer); \
 	while(isalnum(c)) { sb_add(L,&L->buffer,c); READ(); } \
-	sb_nullterminate(L,&L->buffer);
-#define _READSTRING_QUOTED() \
+	sb_nullterminate(L,&L->buffer); \
+	SKIPWHITESPACE(); \
+	}
+
+#define _READSTRING_QUOTED() { \
+	SKIPWHITESPACE(); \
 	sb_reset(L,&L->buffer); \
 	while(c != '\"' && c!= JAD_EOF) { sb_add(L,&L->buffer,c); READ(); } \
-	sb_nullterminate(L,&L->buffer);
-#define _READSTRING() \
+	sb_nullterminate(L,&L->buffer); \
+	SKIPWHITESPACE(); \
+	}
+
+#define _READSTRING() { \
+	SKIPWHITESPACE(); \
 	sb_reset(L,&L->buffer); \
 	while(c != ' ' && c != '\n' && c != '\t' && c != JAD_EOF) { sb_add(L,&L->buffer,c); READ(); } \
-	sb_nullterminate(L,&L->buffer);
-#define READTOKEN() _READTOKEN()
+	sb_nullterminate(L,&L->buffer); \
+	SKIPWHITESPACE(); \
+	}
+
+#define READTOKEN() { _READTOKEN(); }
 #define EXPECT(X) if(c != X) { BOMB("Expected " X); }
-#define READSTRING() \
+
+#define READSTRING() { \
 	if(c == '\"') { \
 		READ(); \
 		_READSTRING_QUOTED(); \
 		EXPECT('\"'); \
 		READ(); \
-	} else _READSTRING();
-#define READLINE() while(c != '\n') READ();
-#define READDIGITS() \
-	READTOKEN(); \
-	digits = 0; \
-	if(L->buffer.length==0) BOMB("Expected a number; got %s", L->buffer.buf);  \
-	for(int i=0;i<L->buffer.length;i++) {  \
-		if(isdigit(L->buffer.buf[i])) { digits *= 10; digits += L->buffer.buf[i] - '0'; } \
-		else BOMB("Expected a number; got %s", L->buffer.buf); \
+	} else _READSTRING(); \
 	}
 
+#define READLINE() { while(c != '\n') READ(); }
 
-//opens a jadContext, which gets its data from the provided stream (containing a cue file) and allocator
-//TODO: pass in other things, like a subfile resolver
+#define READDIGITS() { \
+	READTOKEN(); \
+	digits = 0; \
+	if(L->buffer.length==0) BOMB("Expected a 2 digit number; got %s", L->buffer.buf);  \
+	for(int i=0;i<L->buffer.length;i++) {  \
+		if(isdigit(L->buffer.buf[i])) { digits *= 10; digits += L->buffer.buf[i] - '0'; } \
+		else BOMB("Expected a 2 digit number; got %s", L->buffer.buf); \
+	} \
+	}
+
+#define CHECKTOKEN(x) checktoken(&L->buffer,x)
+
+
+enum TrackType
+{
+	TrackType_None,
+	TrackType_Audio,
+	TrackType_Mode1_2048,
+	TrackType_Mode1_2352,
+};
+
+struct IndexInfo
+{
+	int exists;
+	int lba;
+};
+
+struct TrackInfo
+{
+	int lba;
+	enum TrackType type;
+	struct IndexInfo indexes[100];
+};
+
+
 int jadvacOpenFile_cue(struct jadvacContext* ctx)
 {
-	int c, ret, digits;
+	int retval = JAD_ERROR;
+	int c = 0, ret, digits;
 	jadStream currFile = {0};
 	CueLexer _L = {0}, *L = &_L;
 	struct {
 		StringBuffer performer, songwriter, title, catalog, isrc, cdtextfile;
 	} meta;
 
+	//this might be getting a little large for a stack so
+	struct TrackInfo* tracks = ctx->allocator->alloc(ctx->allocator,sizeof(struct TrackInfo)*100);
+	int tracknum = -1;
+
 	L->allocator = ctx->allocator;
 	L->lastc = '\n';
 	L->stream = ctx->stream;
 	sb_init(L,&L->buffer);
 
-	//init meta
 	sb_init(L,&meta.performer);
 	sb_init(L,&meta.songwriter);
 	sb_init(L,&meta.title);
@@ -210,22 +254,27 @@ int jadvacOpenFile_cue(struct jadvacContext* ctx)
 	sb_init(L,&meta.isrc);
 	sb_init(L,&meta.cdtextfile);
 
+	memset(tracks,0,sizeof(struct TrackInfo)*100);
+
+
 LOOP:
 	READ();
-	SKIPWHITESPACE();
 	READTOKEN();
-	SKIPWHITESPACE();
 
 	//commands that dont matter much
-	if(checktoken(&L->buffer,"PERFORMER")) { READSTRING(); sb_clone(L, &L->buffer, &meta.performer); goto ENDLINE; }
-	if(checktoken(&L->buffer,"SONGWRITER")) { READSTRING(); sb_clone(L, &L->buffer, &meta.songwriter); goto ENDLINE; }
-	if(checktoken(&L->buffer,"TITLE")) { READSTRING(); sb_clone(L, &L->buffer, &meta.title); goto ENDLINE; }
-	if(checktoken(&L->buffer,"CATALOG")) { READSTRING(); sb_clone(L, &L->buffer, &meta.catalog); goto ENDLINE; }
-	if(checktoken(&L->buffer,"ISRC")) { READSTRING(); sb_clone(L, &L->buffer, &meta.isrc); goto ENDLINE; }
-	if(checktoken(&L->buffer,"CDTEXTFILE")) { READSTRING(); sb_clone(L, &L->buffer, &meta.cdtextfile); goto ENDLINE; }
-	if(checktoken(&L->buffer,"REM")) { READLINE(); goto LOOP; }
+	if(CHECKTOKEN("PERFORMER")) {
+		READSTRING();
+		sb_clone(L, &L->buffer, &meta.performer);
+		goto ENDLINE;
+	}
+	if(CHECKTOKEN("SONGWRITER")) { READSTRING(); sb_clone(L, &L->buffer, &meta.songwriter); goto ENDLINE; }
+	if(CHECKTOKEN("TITLE")) { READSTRING(); sb_clone(L, &L->buffer, &meta.title); goto ENDLINE; }
+	if(CHECKTOKEN("CATALOG")) { READSTRING(); sb_clone(L, &L->buffer, &meta.catalog); goto ENDLINE; }
+	if(CHECKTOKEN("ISRC")) { READSTRING(); sb_clone(L, &L->buffer, &meta.isrc); goto ENDLINE; }
+	if(CHECKTOKEN("CDTEXTFILE")) { READSTRING(); sb_clone(L, &L->buffer, &meta.cdtextfile); goto ENDLINE; }
+	if(CHECKTOKEN("REM")) { READLINE(); goto LOOP; }
 
-	if(checktoken(&L->buffer,"FILE"))
+	if(CHECKTOKEN("FILE"))
 	{
 		READSTRING();
 		ret = ctx->fs->open(ctx->fs,&currFile,L->buffer.buf);
@@ -234,9 +283,19 @@ LOOP:
 		goto ENDLINE;
 	}
 
-	if(checktoken(&L->buffer,"TRACK"))
+	if(CHECKTOKEN("INDEX"))
+	{
+		if(tracknum == -1) BOMB("Invalid INDEX command\n");
+	}
+
+	if(CHECKTOKEN("TRACK"))
 	{
 		READDIGITS();
+		tracknum = digits;
+		READTOKEN(); //track type
+		if(CHECKTOKEN("AUDIO")) tracks[tracknum].type = TrackType_Audio;
+		else if(CHECKTOKEN("MODE1/2352")) tracks[tracknum].type = TrackType_Mode1_2352;
+		else BOMB("Invalid track type");
 		goto ENDLINE;
 	}
 
@@ -244,5 +303,20 @@ ENDLINE:
 	READLINE();
 	goto LOOP;
 
-	return JAD_OK;
+	retval = JAD_OK;
+
+EXIT:
+	sb_finalize(L,&meta.performer);
+	sb_finalize(L,&meta.songwriter);
+	sb_finalize(L,&meta.title);
+	sb_finalize(L,&meta.catalog);
+	sb_finalize(L,&meta.isrc);
+	sb_finalize(L,&meta.cdtextfile);
+	sb_finalize(L,&L->buffer);
+	ctx->allocator->free(ctx->allocator,tracks);
+	return retval;
+
+ERROR:
+	retval = JAD_ERROR;
+	goto EXIT;
 }
