@@ -15,6 +15,12 @@ namespace Jad
 		[DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int jadStaticInit();
 
+		[DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int jadstd_OpenStdio(ref JadStream stream, string fname, string mode);
+
+		[DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int jadstd_CloseStdio(ref JadStream stream);
+
 		/// <summary>
 		/// opens a jadContext, which gets its data from the provided stream (containing a jad/jac file) and allocator
 		/// </summary>
