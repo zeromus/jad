@@ -1,24 +1,27 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Jad
 {
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct JadStream
 	{
-		public JadStreamRead read;
-		public JadStreamWrite write;
-		public JadStreamSeek seek;
-		public JadStreamGet get;
-		public JadStreamPut put;
-		public JadStreamFlush flush;
+		public IntPtr opaque;
+		public IntPtr read;
+		public IntPtr write;
+		public IntPtr seek;
+		public IntPtr get;
+		public IntPtr put;
+		public IntPtr flush;
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct JadAllocator
 	{
-		public JadAllocatorAlloc alloc;
-		public JadAllocatorRealloc realloc;
-		public JadAllocatorFree free;
+		public IntPtr opaque;
+		public IntPtr alloc;
+		public IntPtr realloc;
+		public IntPtr free;
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -89,7 +92,7 @@ namespace Jad
 		public JadTOC toc;
 		public JadAllocator allocator;
 		public int numSectors;
-		public JadCreateReadCallback callback;
+		//public JadCreateReadCallback callback;
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
