@@ -132,8 +132,8 @@ int jt_api_libmirage_start(Options *opt, jadCreationParams *jcp)
 
 	//instructions to libjad for how to create the jad
 	jcp->opaque = cc;
-	jcp->numTocEntries = 0;
-	jcp->tocEntries = NULL;
+	//jcp->numTocEntries = 0;
+	//jcp->tocEntries = NULL;
 	jcp->numSectors = length;
 	jcp->callback = _jadCreateCallback;
 

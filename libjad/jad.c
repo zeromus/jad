@@ -66,6 +66,11 @@ void _jadWrite32(struct jadStream* stream, uint32_t v)
 	stream->write(&v,4,stream);
 }
 
+void _jadWrite64(struct jadStream* stream, uint64_t v)
+{
+	stream->write(&v,8,stream);
+}
+
 int _jadRead8(struct jadStream* stream, uint8_t* v)
 {
 	return stream->read(v,1,stream)==1;
@@ -332,16 +337,16 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	//copy the TOC to output
 	if(incp)
 	{
-		for(i=0;i<jad->numTocEntries;i++)
+		for(i=0;i<101;i++)
 		{
-			outs->write(&incp->tocEntries[i],sizeof(jadTOCEntry),outs);
+			outs->write(&incp->toc->entries[i],sizeof(jadTOCEntry),outs);
 		}
 	}
 	else
 	{
 		jadTOCEntry tocEntry;
 		_jadSeek(ins,OFS_TOC);
-		for(i=0;i<jad->numTocEntries;i++)
+		for(i=0;i<101;i++)
 		{
 			ins->read(&tocEntry,sizeof(tocEntry),ins);
 			outs->write(&tocEntry,sizeof(tocEntry),outs);
