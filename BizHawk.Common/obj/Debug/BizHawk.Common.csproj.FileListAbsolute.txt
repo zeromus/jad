@@ -1,0 +1,22 @@
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\output\dll\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\output\dll\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\BizHawk.Common\obj\Debug\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\BizHawk.Common\obj\Debug\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\BizHawk.Common\obj\Debug\BizHawk.Common.csprojResolveAssemblyReference.cache
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.csprojResolveAssemblyReference.cache
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.dll
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.pdb
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.csproj.CoreCompileInputs.cache
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.dll
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.pdb
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Debug\BizHawk.Common.csprojAssemblyReference.cache
+E:\Dropbox\_Programming\jad\JadHammer\BizHawk.Common\obj\Debug\BizHawk.Common.csprojAssemblyReference.cache
+E:\Dropbox\_Programming\jad\JadHammer\BizHawk.Common\obj\Debug\BizHawk.Common.csproj.CoreCompileInputs.cache
+E:\Dropbox\_Programming\jad\JadHammer\BizHawk.Common\obj\Debug\BizHawk.Common.dll
+E:\Dropbox\_Programming\jad\JadHammer\BizHawk.Common\obj\Debug\BizHawk.Common.pdb
+E:\Dropbox\_Programming\jad\JadHammer\output\dll\BizHawk.Common.dll
+E:\Dropbox\_Programming\jad\JadHammer\output\dll\BizHawk.Common.pdb
