@@ -7,40 +7,7 @@
 extern "C" {
 #endif
 
-struct jadSubchannelQ
-{
-	//ADR and CONTROL
-	uint8_t q_status;
-
-	//normal track: BCD indications of the current track number
-	//leadin track: should be 0 
-	uint8_t q_tno;
-
-	//normal track: BCD indications of the current index
-	//leadin track: 'POINT' field used to ID the TOC entry #
-	uint8_t q_index;
-
-	//These are the initial set of timestamps. Meaning varies:
-	//check yellowbook 22.3.3 and 22.3.4
-	//normal track: relative timestamp
-	//leadin track: unknown
-	jadTimestamp q_timestamp;
-
-	//This is supposed to be zero.. maybe it's useful for copy protection or something
-	uint8_t zero;
-
-	//These are the second set of timestamps.  Meaning varies:
-	//check yellowbook 22.3.3 and 22.3.4
-	//normal track: absolute timestamp
-	//leadin track: timestamp of toc entry
-	jadTimestamp q_apTimestamp;
-
-	//The CRC. This is the actual CRC value as would be calculated from our library (it is inverted and written big endian to the disc)
-	//Don't assume this CRC is correct-- If this SubchannelQ was read from a dumped disc, the CRC might be wrong.
-	//CCD doesnt specify this for TOC entries, so it will be wrong. It may or may not be right for data track sectors from a CCD file.
-	//Or we may have computed this SubchannelQ data and generated the correct CRC at that time.
-	uint16_t q_crc;
-};
+	void jadSubq_Clear(jadSubchannelQ* q);
 
 //Reads the subchannel from the specified buffer
 void jadSubchannelQ_DeserializeFromDeinterleaved(jadSubchannelQ* q, void* buf);
@@ -56,7 +23,7 @@ jadTimestamp jadSubchannelQ_GetAPTimestamp(jadSubchannelQ* q);
 
 //computes a subchannel Q status byte from the provided adr and control values
 uint8_t jadSubchannelQ_ComputeStatus(uint32_t adr, jadEnumControlQ control); // { return (uint8_t)(adr | (((int)control) << 4)); }
-	
+
 //Retrives the ADR field of the q_status member (low 4 bits) of a jadSubchannelQ
 int jadSubchannelQ_GetADR(jadSubchannelQ* q); // { get { return q_status & 0xF; } }
 

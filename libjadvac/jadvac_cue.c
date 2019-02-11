@@ -7,6 +7,7 @@
 
 //TODO: mednafen can skip a UTF-8 BOM
 //TODO: mednafen can handle // comments and maybe also # too
+//TODO: disordered tracks should be illegal
 
 typedef struct StringBuffer
 {
@@ -203,43 +204,94 @@ static int checktoken(StringBuffer* sb, const char* target)
 	} \
 	}
 
+#define READMSF() { \
+	READDIGITS(); m = digits; \
+	EXPECT(':'); READ(); READDIGITS(); s = digits; \
+	EXPECT(':'); READ(); READDIGITS(); f = digits; \
+	}
 #define CHECKTOKEN(x) checktoken(&L->buffer,x)
 
 
 enum TrackType
 {
-	TrackType_None,
+	TrackType_None, //used to flag unused tracks
 	TrackType_Audio,
 	TrackType_Mode1_2048,
 	TrackType_Mode1_2352,
 };
 
-struct IndexInfo
+typedef enum FileType
+{
+	FileType_None,
+	FileType_Binary
+} FileType;
+
+typedef struct Blob
+{
+	FileType type;
+	jadStream stream;
+} Blob;
+
+typedef struct IndexInfo
 {
 	int exists;
 	int lba;
-};
+} IndexInfo;
 
-struct TrackInfo
+typedef struct TrackInfo
 {
-	int lba;
+	int lba; //within file
+	int pregap, postgap;
 	enum TrackType type;
 	struct IndexInfo indexes[100];
-};
 
+	//if this is the first track in a blob, that's recorded here
+	struct Blob* newBlob;
+} TrackInfo;
 
-int jadvacOpenFile_cue(struct jadvacContext* ctx)
+static Blob* blob_alloc(jadAllocator* allocator)
 {
+	return (Blob*)allocator->alloc(allocator,sizeof(Blob));
+}
+
+static void process(jadvacContext* ctx, TrackInfo* tracks)
+{
+	int firstTrack = -1, lastTrack = -1;
+	Blob* currBlob = NULL;
+	int lba = 0;
+	//jadCreationParams _jcp; //eh should this have come in here, i dont know
+	//jadCreationParams* jcp = &_jcp;
+	//jcp->numTocEntries = 0;
+	//jcp->tocEntries = NULL;
+	//jcp->numSectors = length;
+	//jcp->callback = _jadCreateCallback;
+
+	//identify first and last tracks
+	for(int i=1;i<100;i++)
+	{
+		if(tracks[i].type != TrackType_None)
+		{
+			if(firstTrack == -1) firstTrack = i;
+			lastTrack = i;
+		}
+	}
+
+	//
+}
+
+int jadvacOpenFile_cue(jadvacContext* ctx)
+{
+	Blob* currBlob = NULL;
 	int retval = JAD_ERROR;
 	int c = 0, ret, digits;
-	jadStream currFile = {0};
+	int pregap_lba = -1;
 	CueLexer _L = {0}, *L = &_L;
 	struct {
 		StringBuffer performer, songwriter, title, catalog, isrc, cdtextfile;
 	} meta;
 
-	//this might be getting a little large for a stack so
-	struct TrackInfo* tracks = ctx->allocator->alloc(ctx->allocator,sizeof(struct TrackInfo)*100);
+	//this might be getting a little large for a stack so...
+	TrackInfo* tracks = ctx->allocator->alloc(ctx->allocator,sizeof(TrackInfo)*100);
 	int tracknum = -1;
 
 	L->allocator = ctx->allocator;
@@ -276,16 +328,49 @@ LOOP:
 
 	if(CHECKTOKEN("FILE"))
 	{
+		jadStream stream;
+
 		READSTRING();
-		ret = ctx->fs->open(ctx->fs,&currFile,L->buffer.buf);
-		if(ret) return ret;
+		ret = ctx->fs->open(ctx->fs,&stream,L->buffer.buf);
+		if(ret) { retval = ret; goto EXIT; }
 		READTOKEN(); //file type
+		if(CHECKTOKEN("BINARY")) {}
+		else BOMB("Invalid file type");
+
+		//currently only binary files are allowed, since we don't have the audio decoding framework in
+
+		//ok, startup the new file
+		currBlob = blob_alloc(ctx->allocator);
+		currBlob->stream = stream;
+		currBlob->type = FileType_Binary;
+
 		goto ENDLINE;
+	}
+
+	if(CHECKTOKEN("PREGAP"))
+	{
+		int m, s, f;
+		if(tracknum == -1) BOMB("Invalid INDEX command\n");
+		READMSF();
+		tracks[tracknum].pregap = m*60*75+s*75+f;
+	}
+	if(CHECKTOKEN("POSTGAP"))
+	{
+		int m, s, f;
+		if(tracknum == -1) BOMB("Invalid INDEX command\n");
+		READMSF();
+		tracks[tracknum].postgap = m*60*75+s*75+f;
 	}
 
 	if(CHECKTOKEN("INDEX"))
 	{
+		int indexnum, m, s, f;
 		if(tracknum == -1) BOMB("Invalid INDEX command\n");
+		READDIGITS();
+		indexnum = digits;
+		READMSF();
+		tracks[tracknum].indexes[indexnum].exists = 1;
+		tracks[tracknum].lba = m*60*75+s*75+f;
 	}
 
 	if(CHECKTOKEN("TRACK"))
@@ -296,6 +381,11 @@ LOOP:
 		if(CHECKTOKEN("AUDIO")) tracks[tracknum].type = TrackType_Audio;
 		else if(CHECKTOKEN("MODE1/2352")) tracks[tracknum].type = TrackType_Mode1_2352;
 		else BOMB("Invalid track type");
+
+		//if we have an unassociated blob, now's the time to associte it
+		tracks[tracknum].newBlob = currBlob;
+		currBlob = NULL;
+
 		goto ENDLINE;
 	}
 
@@ -306,6 +396,7 @@ ENDLINE:
 	retval = JAD_OK;
 
 EXIT:
+	//todo: unassociated blob
 	sb_finalize(L,&meta.performer);
 	sb_finalize(L,&meta.songwriter);
 	sb_finalize(L,&meta.title);

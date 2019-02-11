@@ -18,8 +18,8 @@ static const uint8_t kSync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0
 static const char* kMagic = "JADJAC!\0";
 
 #define OFS_FLAGS 0x0C
-#define OFS_NUMSECTORS 0x10
-#define OFS_TOC 0x20
+#define OFS_NUMSECTORS 0x18
+#define OFS_TOC 0x1C
 
 #define JACOP_END 0x00
 
@@ -61,7 +61,6 @@ void _jadWriteBytes(struct jadStream* stream, void* buf, size_t nBytes)
 	stream->write(buf,nBytes,stream);
 }
 
-
 void _jadWrite32(struct jadStream* stream, uint32_t v)
 {
 	stream->write(&v,4,stream);
@@ -102,7 +101,6 @@ int jadOpen(struct jadContext* jad, struct jadStream* stream, struct jadAllocato
 	if(!_jadSeek(stream,OFS_FLAGS)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->flags)) return JAD_ERROR;
 	if(!_jadRead32(stream,&jad->numSectors)) return JAD_ERROR;
-	if(!_jadRead32(stream,&jad->numTocEntries)) return JAD_ERROR;
 
 	return JAD_OK;
 }
@@ -117,7 +115,6 @@ int jadCreate(jadContext* jad, jadCreationParams* jcp, jadAllocator* allocator)
 
 	jad->flags = 0;
 	jad->numSectors = jcp->numSectors;
-	jad->numTocEntries = jcp->numTocEntries;
 
 	return JAD_OK;
 }
@@ -126,11 +123,6 @@ int jadClose(struct jadContext* jad)
 {
 	//as needed
 	return JAD_OK;
-}
-
-void jadTOCEntry_Clear(jadTOCEntry* tocentry)
-{
-	memset(tocentry,0,sizeof(*tocentry));
 }
 
 //run data from @outstream through @codec, until @amount bytes have been placed in @buf
@@ -323,7 +315,7 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	const uint32_t flags = JACIT?jadFlags_JAC:jadFlags_None;
 	const int isJaced = jad->flags & jadFlags_JAC;
 	uint32_t i,s;
-	uint32_t ofsIndex = OFS_TOC + jad->numTocEntries*12;
+	uint32_t ofsIndex = OFS_TOC + 100*12;
 	uint32_t ofsSectorsPastIndex = ofsIndex + jad->numSectors*4; //(each sector index is 4 bytes right now.. not sufficient for dvds but working ok for cds for now)
 
 	struct jadStream* ins = jad->stream;
@@ -333,10 +325,9 @@ static int _jadDump(struct jadContext* jad, struct jadStream* stream, int JACIT)
 	_jadWriteMagic(outs); //8 bytes
 	_jadWrite32(outs,1); //version
 	_jadWrite32(outs,flags); //flags
+	_jadWrite64(outs,0); //metadata pointer (not supported yet)
 	_jadWrite32(outs,jad->numSectors);
-	_jadWrite32(outs,jad->numTocEntries);
-	_jadWrite32(outs,0); //reserved for CRC
-	_jadWrite32(outs,0); //reserved for ??
+	_jadWriteBytes(outs,&jad->createParams->toc,sizeof(jadTOC));
 
 	//copy the TOC to output
 	if(incp)

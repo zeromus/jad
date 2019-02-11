@@ -4,6 +4,11 @@
 
 static uint16_t jad_CRC16[256];
 
+void jadSubq_Clear(jadSubchannelQ* q)
+{
+	memset(q,0,sizeof(*q));
+}
+
 //this has been checked against mednafen's and seems to match
 //there are a few dozen different ways to do CRC16-CCITT
 //this table is backwards or something. at any rate its tailored to the needs of the Q subchannel
@@ -40,6 +45,7 @@ uint16_t jadq_CRC(void* buf, int offset, int length)
 	return result;
 }
 
+//uhhh arent these senses of serialize and deserialized backwards?
 
 void jadSubchannelQ_DeserializeFromDeinterleaved(jadSubchannelQ* q, void* buf)
 {
@@ -83,7 +89,7 @@ void jadSubchannelQ_SerializeToDeinterleaved(jadSubchannelQ* q, void* buf)
 void jadSubchannelQ_SynthesizeUser(jadSubchannelQ* qOut, jadSubchannelQ* qTemplate, jadTimestamp* MSF, jadTimestamp* AMSF)
 {
 	uint8_t buf[12];
-	
+
 	//populate from template and patch timestamps
 	*qOut = *qTemplate;
 	qOut->q_timestamp = *MSF;
@@ -91,7 +97,7 @@ void jadSubchannelQ_SynthesizeUser(jadSubchannelQ* qOut, jadSubchannelQ* qTempla
 
 	//serialize it so we can run a CRC
 	jadSubchannelQ_SerializeToDeinterleaved(qOut,buf);
-	
+
 	//run the CRC and patch the result
 	qOut->q_crc = jadq_CRC(buf,0,10);
 }

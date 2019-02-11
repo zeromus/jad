@@ -57,8 +57,7 @@ enum jadFlags
 	//whether the file is JAC subformat (compressed)
 	jadFlags_JAC = 1,
 
-	//whether hash fields are present/filled-in
-	jadFlags_IsHashed = 2,
+	jadFlags_BigEndian = 2,
 };
 
 //the read callback for a jadStream
@@ -125,11 +124,62 @@ struct jadSector
 	};
 };
 
-//a single TOC entry (essentially the contents of the Q subchannel)
-typedef uint8_t jadTOCEntry[12];
+//this is here instead of in jadq.h because it's reused as TocEntries
+//this layout does not reflect the layout of a subQ on disc; separate serialization functions are used to represent that
+//this layout is rather designed to be efficient for processing.
+struct jadSubchannelQ
+{
+	//These are the initial set of timestamps. Meaning varies:
+	//check yellowbook 22.3.3 and 22.3.4
+	//normal track: relative timestamp
+	//leadin track: unknown
+	jadTimestamp q_timestamp;
 
-//clears a jadTOCEntry to zeroes
-void jadTOCEntry_Clear(jadTOCEntry* tocentry);
+	//These are the second set of timestamps.  Meaning varies:
+	//check yellowbook 22.3.3 and 22.3.4
+	//normal track: absolute timestamp
+	//leadin track: timestamp of toc entry
+	jadTimestamp q_apTimestamp;
+
+	//The CRC. This is the actual CRC value as would be calculated from our library (it is inverted and written big endian to the disc)
+	//Don't assume this CRC is correct-- If this SubchannelQ was read from a dumped disc, the CRC might be wrong.
+	//CCD doesnt specify this for TOC entries, so it will be wrong. It may or may not be right for data track sectors from a CCD file.
+	//Or we may have computed this SubchannelQ data and generated the correct CRC at that time.
+	//TODO - make low and high bytes independent so this structure is endian neutral
+	uint16_t q_crc;
+
+	//ADR and CONTROL
+	uint8_t q_status;
+
+	//normal track: BCD indications of the current track number
+	//leadin track: should be 0
+	uint8_t q_tno;
+
+	//normal track: BCD indications of the current index
+	//leadin track: 'POINT' field used to ID the TOC entry #
+	uint8_t q_index;
+
+	//This is supposed to be zero.. maybe it's useful for copy protection or something
+	uint8_t zero;
+
+	uint8_t padding[2];
+};
+
+typedef jadSubchannelQ jadTOCEntry;
+
+typedef struct jadTOCHeader
+{
+	uint8_t firstTrack;
+	uint8_t lastTrack;
+	uint8_t flags;
+	uint8_t reserved;
+} jadTOCHeader;
+
+typedef struct jadTOC
+{
+	jadTOCHeader header;
+	jadTOCEntry entries[101];
+} jadTOC;
 
 //the callback used by libjad to fetch sector raw data when creating a jad/jac file
 //set a pointer to the sector and subcode buffer. subcode should be de-interleaved.
@@ -142,8 +192,7 @@ typedef int (*jadCreateReadCallback)(void* opaque, int sectorNumber, void** sect
 typedef struct jadCreationParams
 {
 	void* opaque;
-	int numTocEntries;
-	jadTOCEntry* tocEntries;
+	jadTOC* toc;
 	jadAllocator* allocator;
 	int numSectors;
 	jadCreateReadCallback callback;
@@ -157,7 +206,7 @@ struct jadContext
 {
 	struct jadStream* stream;
 	struct jadAllocator* allocator;
-	uint32_t flags, numSectors, numTocEntries;
+	uint32_t flags, numSectors;
 	struct jadCreationParams* createParams;
 };
 

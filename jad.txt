@@ -10,21 +10,25 @@ TODO - consider baking in an offset to the sector data. will be convenient for h
 
 == JADJAC format ==
 
-Every JAD or JAC file begins this way.
+Every JAD or JAC file begins this way. The header is designed to be blittable.
 
 ofs | type       | comment
+----+------------+----------------------------------------------------------------------------------------
 000 | char[8]    | magic ASCII word "JADJAC!\1". The non-ascii 0x01 is helpful for distinguishing textfiles happening to start with this.
 008 | u32        | version
 00C | u32        | flags 
-                   | flags:0 - JAC subformat
-010 | u32        | numSectors
-014 | u32        | numTocEntries
-018 | u32        | reserved for entire file CRC, as needed
-01C | u32        | reserved
-020 | char[16]   | lets save 16 bytes for recording metadata (intended for disc types e.g. PSX, turboCD, etc.) for extensibility, may contain "EXTENDED" and an 8-byte offset to an extended key/value pair table. may contain other free strings. these should not be necessary for parsing a file, but can save disc identification trouble if present.
-030 | u8[N*12]   | The N TOC entries. Could be a nearly arbitrary amount, but may commonly be 102
+                 | flags:0 - JAC subformat
+                 | flags:1 - file was written as big endian. This is probably a bad idea, but it's available in case you want to receive big endian files on big endian systems.
+010 | u64        | offset to metadata/tags
+018 | u32        | numSectors - number of sectors actually stored in the file
+01C | u8[4]      | struct jadTOC { u8 firstTrack, lastTrack, flags, reserved; }
+020 | u8[101*16] | 101x jadTOCEntry. The first entry is wasted space, to maintain convenience and bilittability
+670 |
 
-After that comes sector data or index
+For JAD, the raw sector data comes next.
+For JAC, the index comes next, followed by the individual sectors compressed.
+
+Finally, the metadata will show up.
 
 == JAD subformat ==
 
@@ -33,7 +37,3 @@ After that comes sector data or index
 library structure
 
 The library does not do any independent memory allocation or file IO. These are handled through the jadStream and jadAllocator interfaces.
-
-known dependencies: 
-- stdint.h
-- stdio.h

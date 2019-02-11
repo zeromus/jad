@@ -39,9 +39,6 @@ typedef struct jadvacContext
 
 int jadvacOpenFile_cue(jadvacContext* ctx);
 
-//utilities
-const char *jadvac_strrchr(const char* src, size_t len, char c);
-
 #ifdef  __cplusplus
 }
 #endif
