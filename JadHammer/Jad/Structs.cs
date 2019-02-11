@@ -1,10 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
 namespace Jad
-<<<<<<< HEAD
-
-=======
->>>>>>> a1404af075b0307450ac106b30630a4ce0dc511d
 {
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct JadStream
