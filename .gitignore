@@ -8,3 +8,8 @@
 /project/vc10/.vs/jadtool/v14/*.suo
 /project/vc10/.vs/jad/v14/*.suo
 /project/vc10/.vs
+/JadHammer/.vs
+/JadHammer/output
+/JadHammer/Jad/bin
+/JadHammer/Jad/obj
+

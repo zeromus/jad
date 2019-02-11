@@ -1,0 +1,14 @@
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\output\dll\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\output\dll\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\BizHawk.Common\obj\Release\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk\BizHawk.Common\obj\Release\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.pdb
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.dll
+D:\Dropbox\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.pdb
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.dll
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\output\dll\BizHawk.Common.pdb
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.csproj.CoreCompileInputs.cache
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.dll
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.pdb
+E:\Dropbox\_Programming\TASVideos\BizHawk - CPC\BizHawk.Common\obj\Release\BizHawk.Common.csprojAssemblyReference.cache
