@@ -7,6 +7,10 @@
 //TODO - jadContext API for reading out the TOC? for handling redundancies and boiling down to 100? we dont wnat to forcibly store the whole thing in memory
 //TODO - divide codecs from streams? i thought maybe by combining them we could support both streamed and buffered scenarios... but i dont know.
 
+#ifndef JADEXPORT
+#define JADEXPORT
+#endif
+
 #include <stdint.h>
 
 #ifdef  __cplusplus
@@ -212,20 +216,21 @@ struct jadContext
 
 
 //performs necessary static initialization
-int jadStaticInit();
+JADEXPORT int jadStaticInit();
 
 //opens a jadContext, which gets its data from the provided stream (containing a jad/jac file) and allocator
-int jadOpen(jadContext* jad, jadStream* stream, jadAllocator* allocator);
+JADEXPORT int jadOpen(jadContext* jad, jadStream* stream, jadAllocator* allocator);
 
 //creates a jadContext based on the provided jadCreationParams, which describe the disc
-int jadCreate(jadContext* jad, jadCreationParams* jcp, jadAllocator* allocator);
+JADEXPORT int jadCreate(jadContext* jad, jadCreationParams* jcp, jadAllocator* allocator);
 
 //dumps the given jad to the output stream as a JAD or JAC file
-int jadDump(jadContext* jad, jadStream* stream, int JACIT);
+JADEXPORT int jadDump(jadContext* jad, jadStream* stream, int JACIT);
 
 //closes a jadContext opened with jadOpen or jadCreate. do not call on unopened jadContexts.
-int jadClose(jadContext* jad);
+JADEXPORT int jadClose(jadContext* jad);
 
+//why is this here
 void jadTimestamp_increment(jadTimestamp* ts);
 
 //general portability utilities for libjad and friends
