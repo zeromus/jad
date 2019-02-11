@@ -10,6 +10,8 @@
 /project/vc10/.vs
 /JadHammer/.vs
 /JadHammer/output
-/JadHammer/Jad/bin
+/JadHammer/BizHawk.Common/obj
+/JadHammer/BizHawk.Emulation.DiscSystem/obj
+/JadHammer/Jad/obj
 /JadHammer/Jad/obj
 
