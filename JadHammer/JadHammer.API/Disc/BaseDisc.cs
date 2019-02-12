@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Linq;
 using BizHawk.Emulation.DiscSystem;
 
 namespace JadHammer.API
@@ -26,6 +26,11 @@ namespace JadHammer.API
 		/// An ISO object for the disc (if this is available)
 		/// </summary>
 		public ISOFile ISODisc = new ISOFile();
+
+		/// <summary>
+		/// Human readable volume descriptor data
+		/// </summary>
+		public ISOData ISOParsedData => ISOData.Populate(ISODisc.VolumeDescriptors.FirstOrDefault());
 
 		/// <summary>
 		/// BizHawk's platform detection result

@@ -24,11 +24,14 @@ namespace TestApp
 			//var discObj2 = BaseDisc.IngestDisc(testCcd);
 
 			string testMds = @"G:\_Emulation\PSX\iso\LEGORACERS.mds";
-			//var discObj3 = BaseDisc.IngestDisc(testMds);
+			var discObj3 = BaseDisc.IngestDisc(testMds);
+
+			string testOther = @"G:\_Emulation\PCFX\Games\Super Power League FX.cue";
+			var discObj4 = BaseDisc.IngestDisc(testOther);
 
 			Console.ReadKey();
 
-			/*
+		/*
 			var a = LibJad.jadStaticInit();
 			//var b = LibJad.jadstd_OpenStdio(ref jStream, "test.jad", "rb");
 
