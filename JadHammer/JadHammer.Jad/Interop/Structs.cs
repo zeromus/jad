@@ -92,7 +92,7 @@ namespace JadHammer.Jad
 		public JadTOC toc;
 		public JadAllocator allocator;
 		public int numSectors;
-		//public JadCreateReadCallback callback;
+		public IntPtr callback;
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]

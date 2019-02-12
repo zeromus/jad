@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JadHammer.Jad", "JadHammer.Jad\JadHammer.Jad.csproj", "{8913D099-2FB1-4101-B79A-47EE29E301A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JadHammer.API", "JadHammer.API\JadHammer.API.csproj", "{E39E62B6-9195-4FAD-AB6F-0B7315155F52}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{8913D099-2FB1-4101-B79A-47EE29E301A4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8913D099-2FB1-4101-B79A-47EE29E301A4}.Release|x86.ActiveCfg = Release|x86
 		{8913D099-2FB1-4101-B79A-47EE29E301A4}.Release|x86.Build.0 = Release|x86
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Debug|x86.Build.0 = Debug|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Release|x86.ActiveCfg = Release|Any CPU
+		{E39E62B6-9195-4FAD-AB6F-0B7315155F52}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
