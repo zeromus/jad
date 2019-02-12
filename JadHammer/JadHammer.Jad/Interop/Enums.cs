@@ -1,5 +1,5 @@
 ﻿
-namespace Jad
+namespace JadHammer.Jad
 {
 	public enum jadEnumControlQ
 	{

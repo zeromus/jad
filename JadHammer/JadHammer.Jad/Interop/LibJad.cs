@@ -2,11 +2,11 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Jad
+namespace JadHammer.Jad
 {
 	public static class LibJad
 	{
-		private const string dllName = "jad.lib";
+		private const string dllName = "jad.dll";
 
 		/// <summary>
 		/// performs necessary static initialization
@@ -20,6 +20,7 @@ namespace Jad
 
 		[DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int jadstd_CloseStdio(ref JadStream stream);
+
 		/// <summary>
 		/// opens a jadContext, which gets its data from the provided stream (containing a jad/jac file) and allocator
 		/// </summary>
