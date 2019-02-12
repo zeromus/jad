@@ -44,16 +44,48 @@ namespace JadHammer.Jad
 		public byte FRAC;
 		public byte _padding;
 	}
-
-	[StructLayout(LayoutKind.Explicit)]
+	
 	public struct JadSector
 	{
+		/*
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2352), FieldOffset(0)]
 		public byte[] data;
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 96), FieldOffset(2352)]
 		public byte[] subcode;
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2448), FieldOffset(0)]
 		public byte[] entire;
+		*/
+
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2448)]
+		public byte[] entire;
+
+		public byte[] data
+		{
+			get
+			{
+				byte[] dArr = new byte[2352];
+				Array.Copy(entire, dArr, 2352);
+				return dArr;
+			}
+			set
+			{
+				Array.Copy(value, entire, 2352);
+			}
+		}
+
+		public byte[] subcode
+		{
+			get
+			{
+				byte[] sArr = new byte[96];
+				Array.Copy(entire, 2352, sArr, 0, 96);
+				return sArr;
+			}
+			set
+			{
+				Array.Copy(value, 0, entire, 2352, 96);
+			}
+		}
 	}
 
 	/// <summary>
@@ -65,6 +97,7 @@ namespace JadHammer.Jad
 		public JadTimestamp q_timestamp;
 		public JadTimestamp q_apTimestamp;
 		public ushort q_crc;
+		public byte q_status;
 		public byte q_tno;
 		public byte q_index;
 		public byte zero;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,22 +14,18 @@ namespace JadHammer.API
 		/// <summary>
 		/// Attempts to write the mounted disk out to the specified format
 		/// </summary>
-		/// <param name="filePath"></param>
-		/// <param name="disc"></param>
-		/// <returns></returns>
 		public override bool Run()
 		{
 			try
 			{
 				CCD_Format.Dump(Disc.MountedDisc, FilePath);
+				return true;
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine(e);
+				Debug.WriteLine(e);
 				return false;
 			}
-
-			throw new NotImplementedException();
 		}
 	}
 }

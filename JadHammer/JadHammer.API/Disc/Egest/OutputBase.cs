@@ -52,8 +52,15 @@ namespace JadHammer.API
 						};
 						ob.Run();
 						return true;
-					case OutputDiscType.JAC:
 					case OutputDiscType.JAD:
+						ob = new OutputJad
+						{
+							Disc = disc,
+							FilePath = filePath
+						};
+						ob.Run();
+						return true;
+					case OutputDiscType.JAC:
 					default:
 						return false;
 				}

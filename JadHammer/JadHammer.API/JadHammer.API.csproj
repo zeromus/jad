@@ -45,6 +45,7 @@
     <Compile Include="Disc\ChdDisc.cs" />
     <Compile Include="Disc\Egest\OutputBase.cs" />
     <Compile Include="Disc\Egest\OutputCcd.cs" />
+    <Compile Include="Disc\Egest\OutputJad.cs" />
     <Compile Include="Disc\ISOData.cs" />
     <Compile Include="Disc\MdsDisc.cs" />
     <Compile Include="Disc\JacDisc.cs" />

@@ -28,7 +28,7 @@ namespace TestApp
 
 			string testOther = @"G:\_Emulation\PCFX\Games\Super Power League FX.cue";
 			var discObj4 = BaseDisc.IngestDisc(testOther);
-			discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.ccd", OutputDiscType.CCD);
+			discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.jad", OutputDiscType.JAD);
 
 			Console.ReadKey();
 
