@@ -15,7 +15,7 @@
 #include "jadcodec_heatshrink.h"
 
 static const uint8_t kSync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
-static const char* kMagic = "JADJAC!\0";
+static const char* kMagic = "JADJAC!\1";
 
 #define OFS_FLAGS 0x0C
 #define OFS_NUMSECTORS 0x18

@@ -1,19 +1,21 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "jadstd.h"
 
-int jadstd_StdioRead(void* buffer, size_t bytes, jadStream* stream)
+static int jadstd_StdioRead(void* buffer, size_t bytes, jadStream* stream)
 {
 	FILE* f = (FILE*)stream->opaque;
 	return fread(buffer,1,bytes,f);
 }
 
-int jadstd_StdioWrite(const void* buffer, size_t bytes, jadStream* stream)
+static int jadstd_StdioWrite(const void* buffer, size_t bytes, jadStream* stream)
 {
 	FILE* f = (FILE*)stream->opaque;
 	return fwrite(buffer,1,bytes,f);
 }
 
-long jadstd_StdioSeek(jadStream* stream, long offset, int origin)
+static long jadstd_StdioSeek(jadStream* stream, long offset, int origin)
 {
 	FILE* f = (FILE*)stream->opaque;
 	int ret = fseek(f,offset,origin);
@@ -22,7 +24,7 @@ long jadstd_StdioSeek(jadStream* stream, long offset, int origin)
 	return offset;
 }
 
-int jadstd_StdioGet(jadStream* stream)
+static int jadstd_StdioGet(jadStream* stream)
 {
 	int ret = fgetc((FILE*)stream->opaque);
 	if(ret == EOF)
@@ -30,7 +32,7 @@ int jadstd_StdioGet(jadStream* stream)
 	else return ret;
 }
 
-int jadstd_StdioPut(jadStream* stream, uint8_t value)
+static int jadstd_StdioPut(jadStream* stream, uint8_t value)
 {
 	int ret = fputc(value, (FILE*)stream->opaque);
 	if(ret == EOF)
@@ -59,4 +61,34 @@ jadError jadstd_CloseStdio(jadStream* stream)
 	if(stream->opaque == NULL)
 		return JAD_ERROR;
 	return fclose((FILE*)stream->opaque) != EOF;
+}
+
+//callbacks for jadAllocator operations
+static void* jadstd_StdlibAlloc(jadAllocator* allocator, size_t amt)
+{
+	return malloc(amt);
+}
+
+static void* jadstd_StdlibRealloc(jadAllocator* allocator,  void* ptr, size_t amt)
+{
+	return realloc(ptr, amt);
+}
+
+static void jadstd_StdlibFree(jadAllocator* allocator, void* ptr)
+{
+	free(ptr);
+}
+
+jadError jadstd_OpenAllocator(jadAllocator* allocator)
+{
+	allocator->opaque = NULL;
+	allocator->alloc = &jadstd_StdlibAlloc;
+	allocator->realloc = &jadstd_StdlibRealloc;
+	allocator->free = &jadstd_StdlibFree;
+	return JAD_OK;
+}
+
+jadError jadstd_CloseAllocator(jadAllocator* allocator)
+{
+	return JAD_OK;
 }
