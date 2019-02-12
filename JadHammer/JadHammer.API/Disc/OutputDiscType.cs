@@ -8,7 +8,6 @@ namespace JadHammer.API
 	{
 		JAD,
 		JAC,
-		CCD,
-		CHD
+		CCD
 	}
 }

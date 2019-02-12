@@ -43,6 +43,17 @@ namespace JadHammer.API
 		public string FilePath;
 
 		/// <summary>
+		/// Attempts to output the mounted disc in the specified format
+		/// </summary>
+		/// <param name="fPath"></param>
+		/// <param name="outputType"></param>
+		/// <returns></returns>
+		public bool EgestDisc(string fPath, OutputDiscType outputType)
+		{
+			return OutputBase.Run(fPath, outputType, this);
+		}
+
+		/// <summary>
 		/// Serves as a constructor/initializer whilst detecting the input disc type
 		/// </summary>
 		/// <returns>NULL if detection or initialization fails</returns>
