@@ -23,6 +23,16 @@ namespace JadHammer.API
 		public Disc MountedDisc = null;
 
 		/// <summary>
+		/// An ISO object for the disc (if this is available)
+		/// </summary>
+		public ISOFile ISODisc = new ISOFile();
+
+		/// <summary>
+		/// BizHawk's platform detection result
+		/// </summary>
+		public DiscType DetectedDiscPlatform = DiscType.UnknownFormat;
+
+		/// <summary>
 		/// Filepath passed in at instantiation
 		/// </summary>
 		public string FilePath;
@@ -53,7 +63,7 @@ namespace JadHammer.API
 
 		public void Dispose()
 		{
-			MountedDisc.Dispose();
+			MountedDisc?.Dispose();
 		}
 	}
 }

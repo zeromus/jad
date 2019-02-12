@@ -50,6 +50,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\JadHammer.API\JadHammer.API.csproj">
+      <Project>{e39e62b6-9195-4fad-ab6f-0b7315155f52}</Project>
+      <Name>JadHammer.API</Name>
+    </ProjectReference>
     <ProjectReference Include="..\JadHammer.Jad\JadHammer.Jad.csproj">
       <Project>{8913d099-2fb1-4101-b79a-47ee29e301a4}</Project>
       <Name>JadHammer.Jad</Name>

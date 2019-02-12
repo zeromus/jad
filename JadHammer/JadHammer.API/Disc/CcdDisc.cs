@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BizHawk.Emulation.DiscSystem;
+using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -20,7 +21,32 @@ namespace JadHammer.API
 		/// <returns></returns>
 		protected override bool _LoadDisc()
 		{
-			throw new NotImplementedException("CCD loading not yet implemented");
+			try
+			{
+				var dmj = new DiscMountJob
+				{
+					IN_DiscInterface = DiscInterface.BizHawk,
+					IN_FromPath = FilePath
+				};
+				dmj.Run();
+				MountedDisc = dmj.OUT_Disc;
+
+				var dider = new DiscIdentifier(MountedDisc);
+				DetectedDiscPlatform = dider.DetectDiscType();
+
+				var discView = EDiscStreamView.DiscStreamView_Mode1_2048;
+				if (MountedDisc.TOC.Session1Format == SessionFormat.Type20_CDXA)
+					discView = EDiscStreamView.DiscStreamView_Mode2_Form1_2048;
+
+				ISODisc.Parse(new DiscStream(MountedDisc, discView, 0));
+
+				return true;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine("ERROR mounting disc: " + e);
+				return false;
+			}
 		}
 
 		/// <summary>
@@ -43,10 +69,8 @@ namespace JadHammer.API
 						sr.Read(buffer, 0, (int)len);
 						string s = new string(buffer).ToUpper();
 
-						if (s.Contains("[CloneCD]") &&
-						    s.Contains("Version=") &&
-						    s.Contains("[Disc]") &&
-						    s.Contains("[Session "))
+						if (s.Contains("[CLONECD]") &&
+						    s.Contains("VERSION="))
 						{
 							CcdDisc bd = new CcdDisc();
 							bd.FilePath = filePath;

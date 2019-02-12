@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JadHammer.Jad;
+using JadHammer.API;
 
 namespace TestApp
 {
@@ -16,6 +17,18 @@ namespace TestApp
 
 		static void Main(string[] args)
 		{
+			string testCue = @"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).cue";
+			//var discObj = BaseDisc.IngestDisc(testCue);
+
+			string testCcd = @"G:\_Emulation\PSX\iso\Resident Evil - Director's Cut - Dual Shock Ver. (USA)\Resident Evil - Director's Cut - Dual Shock Ver. (USA).ccd";
+			//var discObj2 = BaseDisc.IngestDisc(testCcd);
+
+			string testMds = @"G:\_Emulation\PSX\iso\LEGORACERS.mds";
+			//var discObj3 = BaseDisc.IngestDisc(testMds);
+
+			Console.ReadKey();
+
+			/*
 			var a = LibJad.jadStaticInit();
 			//var b = LibJad.jadstd_OpenStdio(ref jStream, "test.jad", "rb");
 
@@ -39,7 +52,7 @@ namespace TestApp
 			}
 
 			var c = LibJad.jadCreate(ref jContext, ref jCreationParams, ref jAllocator);
-
+			*/
 			Console.ReadKey();
 		}
 	}

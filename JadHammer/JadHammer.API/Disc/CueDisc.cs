@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using BizHawk.Emulation.DiscSystem;
 
 namespace JadHammer.API
 {
@@ -20,7 +21,32 @@ namespace JadHammer.API
 		/// <returns></returns>
 		protected override bool _LoadDisc()
 		{
-			throw new NotImplementedException("CUE loading not yet implemented");
+			try
+			{
+				var dmj = new DiscMountJob
+				{
+					IN_DiscInterface = DiscInterface.BizHawk,
+					IN_FromPath = FilePath
+				};
+				dmj.Run();
+				MountedDisc = dmj.OUT_Disc;
+
+				var dider = new DiscIdentifier(MountedDisc);
+				DetectedDiscPlatform = dider.DetectDiscType();
+
+				var discView = EDiscStreamView.DiscStreamView_Mode1_2048;
+				if (MountedDisc.TOC.Session1Format == SessionFormat.Type20_CDXA)
+					discView = EDiscStreamView.DiscStreamView_Mode2_Form1_2048;
+
+				ISODisc.Parse(new DiscStream(MountedDisc, discView, 0));
+
+				return true;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine("ERROR mounting disc: " + e);
+				return false;
+			}
 		}
 
 		/// <summary>
