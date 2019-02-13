@@ -186,8 +186,10 @@ namespace JadHammer.API
 		/// <param name="subCodeBuffer"></param>
 		void MyJadCreateReadCallback(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer)
 		{
-			DSR.ReadLBA_2352(sectorNumber, SectorBuffer, 0);
-			DSR.ReadLBA_2448(sectorNumber, SubCodeBuffer, 2352);
+			byte[] buf2448 = new byte[2448];
+			DSR.ReadLBA_2448(sectorNumber, buf2448, 0);
+			Array.Copy(buf2448, SectorPinned.Data, 2352);
+			Array.Copy(buf2448, 2352, SubcodePinned.Data, 0, 96);
 
 			*sectorBuffer = SectorPinned.Ptr;
 			*subCodeBuffer = SubcodePinned.Ptr;
