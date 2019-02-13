@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -13,6 +14,39 @@ namespace JadHammer.API
 	public unsafe class OutputJad : OutputBase
 	{
 		private DiscSectorReader DSR { get; set; }
+
+		/// <summary>
+		/// Signs whether the output file should be a compressed JAC (or not)
+		/// </summary>
+		public bool IsJac { get; set; }
+
+		/// <summary>
+		/// Clumsy override - set file extension based on JAC or JAD
+		/// </summary>
+		public override string FilePath
+		{
+			get => _filePath;
+			set
+			{
+				if (Path.HasExtension(value))
+				{
+					if (IsJac)
+						_filePath = Path.ChangeExtension(value, ".jac");
+					else
+						_filePath = Path.ChangeExtension(value, ".jad");
+				}
+				else
+				{
+					if (IsJac)
+						_filePath = value + ".jac";
+					else
+					{
+						_filePath = value + ".jad";
+					}
+				}
+			}
+		}
+		private string _filePath;
 
 		/// <summary>
 		/// Callback object
@@ -131,7 +165,7 @@ namespace JadHammer.API
 
 					// dump
 					//context.stream = stream;
-					jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
+					jadErrStatus = LibJad.jadDump(ref context, ref stream, IsJac ? 1 : 0);
 					if (jadErrStatus != LibJad.JAD_OK)
 						throw new ApplicationException("LibJad Error: jadDump: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 				}

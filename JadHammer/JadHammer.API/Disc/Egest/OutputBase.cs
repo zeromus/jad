@@ -19,7 +19,7 @@ namespace JadHammer.API
 		/// <summary>
 		/// Destination file path
 		/// </summary>
-		protected string FilePath;
+		public virtual string FilePath { get; set; }
 
 		/// <summary>
 		/// Attempts to output to the specified format
@@ -55,12 +55,21 @@ namespace JadHammer.API
 					case OutputDiscType.JAD:
 						ob = new OutputJad
 						{
+							IsJac = false,
 							Disc = disc,
 							FilePath = filePath
 						};
 						ob.Run();
 						return true;
 					case OutputDiscType.JAC:
+						ob = new OutputJad
+						{
+							IsJac = true,
+							Disc = disc,
+							FilePath = filePath
+						};
+						ob.Run();
+						return true;
 					default:
 						return false;
 				}
