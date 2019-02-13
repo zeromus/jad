@@ -42,7 +42,7 @@ namespace JadHammer.API
 		/// <summary>
 		/// Attempts to write the mounted disk out to the specified format
 		/// </summary>
-		public unsafe override bool Run()
+		public override bool Run()
 		{
 			try
 			{
@@ -95,20 +95,20 @@ namespace JadHammer.API
 
 				// static init
 				jadErrStatus = LibJad.jadStaticInit();
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadStaticInit: " + ((JadStatus)jadErrStatus).ToString());
+				if (jadErrStatus != LibJad.JAD_OK)
+					throw new ApplicationException("LibJad Error: jadStaticInit: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 				// allocator
 				JadAllocator allocator = new JadAllocator();
 				jadErrStatus = LibJad.jadstd_OpenAllocator(ref allocator);
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadstd_OpenAllocator: " + ((JadStatus)jadErrStatus).ToString());
+				if (jadErrStatus != LibJad.JAD_OK)
+					throw new ApplicationException("LibJad Error: jadstd_OpenAllocator: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 				// jadstream
 				JadStream stream = new JadStream();
 				jadErrStatus = LibJad.jadstd_OpenStdio(ref stream, FilePath, "wb");
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadstd_OpenStdio: " + ((JadStatus)jadErrStatus).ToString());
+				if (jadErrStatus != LibJad.JAD_OK)
+					throw new ApplicationException("LibJad Error: jadstd_OpenStdio: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 				// JadCreationParams
 				fixed (JadSubchannelQ* pTocEntries = &tocEntries[0])
@@ -125,26 +125,25 @@ namespace JadHammer.API
 					// context
 					JadContext context = new JadContext();
 
-					jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator); // context is not being updated at all with this
-					if (jadErrStatus != 0)
-						throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus)jadErrStatus).ToString());
+					jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);
+					if (jadErrStatus != LibJad.JAD_OK)
+						throw new ApplicationException("LibJad Error: jadCreate: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 					// dump
-					// the following currently throws a:
-					// "System.AccessViolationException: 'Attempted to read or write protected memory. This is often an indication that other memory is corrupt.'"
+					//context.stream = stream;
 					jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
-					if (jadErrStatus != 0)
-						throw new ApplicationException("LibJad Error: jadDump: " + ((JadStatus)jadErrStatus).ToString());
+					if (jadErrStatus != LibJad.JAD_OK)
+						throw new ApplicationException("LibJad Error: jadDump: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 				}
 
 				// close
 				jadErrStatus = LibJad.jadstd_CloseStdio(ref stream);
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadstd_CloseStdio: " + ((JadStatus)jadErrStatus).ToString());
+				if (jadErrStatus != LibJad.JAD_OK && jadErrStatus != LibJad.JAD_EOF)
+					throw new ApplicationException("LibJad Error: jadstd_CloseStdio: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 				jadErrStatus = LibJad.jadstd_CloseAllocator(ref allocator);
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadstd_CloseAllocator: " + ((JadStatus)jadErrStatus).ToString());
+				if (jadErrStatus != LibJad.JAD_OK)
+					throw new ApplicationException("LibJad Error: jadstd_CloseAllocator: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
 				return true;
 			}
@@ -175,7 +174,8 @@ namespace JadHammer.API
 		/// <param name="sectorNumber"></param>
 		/// <param name="sectorBuffer"></param>
 		/// <param name="subCodeBuffer"></param>
-		private delegate void JadReadCallbackDelegate(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		private delegate int JadReadCallbackDelegate(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer);
 
 		/// <summary>
 		/// The actual read sector callback method
@@ -184,7 +184,7 @@ namespace JadHammer.API
 		/// <param name="sectorNumber"></param>
 		/// <param name="sectorBuffer"></param>
 		/// <param name="subCodeBuffer"></param>
-		void MyJadCreateReadCallback(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer)
+		int MyJadCreateReadCallback(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer)
 		{
 			byte[] buf2448 = new byte[2448];
 			DSR.ReadLBA_2448(sectorNumber, buf2448, 0);
@@ -193,6 +193,8 @@ namespace JadHammer.API
 
 			*sectorBuffer = SectorPinned.Ptr;
 			*subCodeBuffer = SubcodePinned.Ptr;
+
+			return 0;
 		}
 
 		/// <summary>

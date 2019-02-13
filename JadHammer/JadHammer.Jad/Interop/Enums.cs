@@ -36,8 +36,8 @@ namespace JadHammer.Jad
 	public enum JadStatus
 	{
 		JAD_OK = 0,
-		JAD_EOF = -1,
-		JAD_ERROR = -2,
-		JAD_ERROR_FILE_NOT_FOUND = -3,
+		JAD_EOF = 1,
+		JAD_ERROR = 2,
+		JAD_ERROR_FILE_NOT_FOUND = 3,
 	}
 }

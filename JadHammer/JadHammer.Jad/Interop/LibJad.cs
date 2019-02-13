@@ -8,6 +8,11 @@ namespace JadHammer.Jad
 	{
 		private const string dllName = "jad.dll";
 
+		public const int JAD_OK = 0;
+		public const int JAD_EOF = 1;
+		public const int JAD_ERROR = 2;
+		public const int JAD_ERROR_FILE_NOT_FOUND = 3;
+
 		#region jad
 
 		/// <summary>
