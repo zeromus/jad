@@ -9,7 +9,7 @@ namespace JadHammer.API
 	/// <summary>
 	/// Base class of output operations
 	/// </summary>
-	public abstract class OutputBase
+	public abstract class OutputBase : IDisposable
 	{
 		/// <summary>
 		/// Mounted disc passed in via constructor
@@ -69,6 +69,11 @@ namespace JadHammer.API
 			{
 				return false;
 			}
+		}
+
+		public virtual void Dispose()
+		{
+
 		}
 	}
 }

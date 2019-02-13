@@ -32,4 +32,12 @@ namespace JadHammer.Jad
 
 		jadFlags_BigEndian = 2
 	}
+
+	public enum JadStatus
+	{
+		JAD_OK = 0,
+		JAD_EOF = -1,
+		JAD_ERROR = -2,
+		JAD_ERROR_FILE_NOT_FOUND = -3,
+	}
 }

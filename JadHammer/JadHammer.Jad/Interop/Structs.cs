@@ -125,6 +125,7 @@ namespace JadHammer.Jad
 		public JadTOC toc;
 		public JadAllocator allocator;
 		public int numSectors;
+		//[MarshalAs(UnmanagedType.LPStruct)]
 		public IntPtr callback;
 	}
 

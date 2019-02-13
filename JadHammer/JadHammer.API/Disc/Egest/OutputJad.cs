@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using BizHawk.Emulation.DiscSystem;
@@ -9,8 +10,35 @@ using JadHammer.Jad;
 
 namespace JadHammer.API
 {
-	public class OutputJad : OutputBase
+	public unsafe class OutputJad : OutputBase
 	{
+		private DiscSectorReader DSR { get; set; }
+
+		/// <summary>
+		/// Callback object
+		/// </summary>
+		private readonly JadReadCallbackDelegate SectorReadCallback;
+
+		/// <summary>
+		/// Working sector buffer
+		/// </summary>
+		private byte[] SectorBuffer = new byte[2352];
+
+		/// <summary>
+		/// Pinned sector buffer class
+		/// </summary>
+		private PinnedBuffer SectorPinned;
+
+		/// <summary>
+		/// Working subcode buffer
+		/// </summary>
+		private byte[] SubCodeBuffer = new byte[96];
+
+		/// <summary>
+		/// Pinned subcode buffer class
+		/// </summary>
+		private PinnedBuffer SubcodePinned;
+
 		/// <summary>
 		/// Attempts to write the mounted disk out to the specified format
 		/// </summary>
@@ -19,6 +47,8 @@ namespace JadHammer.API
 			try
 			{
 				var d = Disc.MountedDisc;
+				DSR = new DiscSectorReader(d);
+				int jadErrStatus = 0;
 
 				// header and toc
 				JadTocHeader header = new JadTocHeader();
@@ -60,36 +90,37 @@ namespace JadHammer.API
 						zero = 0
 					};
 				}
-
-				// uncompressed sector data
-
-				List<JadSector> Sectors = new List<JadSector>();
-
-				var buf2448 = new byte[2448];
-				DiscSectorReader dsr = new DiscSectorReader(d);
-				int nLBA = d.Session1.LeadoutLBA;
-				for (int lba = 0; lba < nLBA; lba++)
-				{
-					dsr.ReadLBA_2448(lba, buf2448, 0);
-
-					Sectors.Add(new JadSector
-					{
-						entire = buf2448
-					});
-
-					Debug.WriteLine("Processing Sector: " + lba);
-				}
-
-				int numSectors = Sectors.Count;
-
-				//create JadCreationParams
-				JadCreationParams jcp = new JadCreationParams();
-				jcp.toc = toc;
-				jcp.numSectors = numSectors;
-				//jcp.allocator =		// not sure?
-				//jcp.callback =		// not sure?
 				
-				// pass the everything to libjad *somehow*
+				int numSectors = d.Session1.LeadoutLBA;
+
+				// allocator
+				JadAllocator allocator = new JadAllocator();
+				jadErrStatus = LibJad.jadstd_OpenAllocator(ref allocator);
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadstd_OpenAllocator: " + ((JadStatus)jadErrStatus).ToString());
+
+				// JadCreationParams
+				JadCreationParams jcp = new JadCreationParams
+				{
+					toc = toc,
+					numSectors = numSectors,
+					allocator = allocator,
+					callback = Marshal.GetFunctionPointerForDelegate(SectorReadCallback)
+				};
+
+				// context
+				JadContext context = new JadContext();
+				jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus) jadErrStatus).ToString());
+
+				// jadstream
+				JadStream stream = new JadStream();
+				
+				// dump
+				jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadDump: " + ((JadStatus) jadErrStatus).ToString());
 
 				return true;
 			}
@@ -98,6 +129,54 @@ namespace JadHammer.API
 				Debug.WriteLine(e);
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		public OutputJad()
+		{
+			// pinned buffers
+			SectorPinned = new PinnedBuffer(SectorBuffer);
+			SubcodePinned = new PinnedBuffer(SubCodeBuffer);
+
+			// read sector callback
+			SectorReadCallback = new JadReadCallbackDelegate(MyJadCreateReadCallback);
+		}
+
+		/// <summary>
+		/// Read sector delegate
+		/// </summary>
+		/// <param name="opaque"></param>
+		/// <param name="sectorNumber"></param>
+		/// <param name="sectorBuffer"></param>
+		/// <param name="subCodeBuffer"></param>
+		private delegate void JadReadCallbackDelegate(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer);
+
+		/// <summary>
+		/// The actual read sector callback method
+		/// </summary>
+		/// <param name="opaque"></param>
+		/// <param name="sectorNumber"></param>
+		/// <param name="sectorBuffer"></param>
+		/// <param name="subCodeBuffer"></param>
+		void MyJadCreateReadCallback(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer)
+		{
+			DSR.ReadLBA_2352(sectorNumber, SectorBuffer, 0);
+			DSR.ReadLBA_2448(sectorNumber, SubCodeBuffer, 2352);
+
+			*sectorBuffer = SectorPinned.Ptr;
+			*subCodeBuffer = SubcodePinned.Ptr;
+		}
+
+		/// <summary>
+		/// Disposal
+		/// </summary>
+		public override void Dispose()
+		{
+			DSR = null;
+			SectorPinned.Dispose();
+			SubcodePinned.Dispose();
 		}
 	}
 }
