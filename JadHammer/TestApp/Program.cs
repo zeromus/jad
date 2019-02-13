@@ -15,7 +15,7 @@ namespace TestApp
 		private static JadCreationParams jCreationParams = new JadCreationParams();
 		private static JadAllocator jAllocator = new JadAllocator();
 
-		static void Main(string[] args)
+		static unsafe void Main(string[] args)
 		{
 			string testCue = @"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).cue";
 			//var discObj = BaseDisc.IngestDisc(testCue);
@@ -26,9 +26,9 @@ namespace TestApp
 			string testMds = @"G:\_Emulation\PSX\iso\LEGORACERS.mds";
 			//var discObj3 = BaseDisc.IngestDisc(testMds);
 
-			string testOther = @"G:\_Emulation\PCFX\Games\Super Power League FX.cue";
+			string testOther = @"D:\isos\psx\fft.cue";
 			var discObj4 = BaseDisc.IngestDisc(testOther);
-			discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.jad", OutputDiscType.JAD);
+			discObj4.EgestDisc(@"D:\isos\psx\fft.jad", OutputDiscType.JAD);
 
 			Console.ReadKey();
 
@@ -36,26 +36,32 @@ namespace TestApp
 			var a = LibJad.jadStaticInit();
 			//var b = LibJad.jadstd_OpenStdio(ref jStream, "test.jad", "rb");
 
-			jCreationParams = new JadCreationParams
-			{
-				numSectors = 100,
-				toc = new JadTOC(),
-				allocator = jAllocator,
-			};
-			jCreationParams.toc.header = new JadTocHeader
+			var toc = new JadTOC();
+			var allocator = jAllocator;
+			toc.header = new JadTocHeader
 			{
 				firstTrack = 1,
 				lastTrack = 1,
 				flags = 0
 			};
-			jCreationParams.toc.entries = new JadSubchannelQ[101];
+			var entries = new JadSubchannelQ[101];
 			for (var i = 0; i < 101; i++)
 			{
-				jCreationParams.toc.entries[i] = new JadSubchannelQ();
-				jCreationParams.toc.entries[i].q_index = (byte) i;
+				entries[i] = new JadSubchannelQ();
+				entries[i].q_index = (byte) i;
 			}
+			fixed (JadSubchannelQ* pEntries = &entries[0])
+			{
+				toc.entries = pEntries;
+				jCreationParams = new JadCreationParams
+				{
+					numSectors = 100,
+					toc = &toc,
+					allocator = &allocator,
+				};
 
-			var c = LibJad.jadCreate(ref jContext, ref jCreationParams, ref jAllocator);
+				var c = LibJad.jadCreate(ref jContext, ref jCreationParams, ref jAllocator);
+			}
 			
 			Console.ReadKey();
 		}

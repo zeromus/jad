@@ -109,22 +109,21 @@ namespace JadHammer.Jad
 	/// TOC
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
-	public struct JadTOC
+	public unsafe struct JadTOC
 	{
 		public JadTocHeader header;
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 101)]
-		public JadSubchannelQ[] entries;
+		public JadSubchannelQ* entries; //101 entries
 	}
 
 	/// <summary>
 	/// the params struct used for jadCreate
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
-	public struct JadCreationParams
+	public unsafe struct JadCreationParams
 	{
 		public IntPtr opaque;
-		public JadTOC toc;
-		public JadAllocator allocator;
+		public JadTOC* toc;
+		public JadAllocator* allocator;
 		public uint numSectors;
 		public IntPtr callback;
 	}

@@ -42,7 +42,7 @@ namespace JadHammer.API
 		/// <summary>
 		/// Attempts to write the mounted disk out to the specified format
 		/// </summary>
-		public override bool Run()
+		public unsafe override bool Run()
 		{
 			try
 			{
@@ -58,14 +58,14 @@ namespace JadHammer.API
 				header.reserved = 0;
 
 				JadTOC toc = new JadTOC();
+				var tocEntries = new JadSubchannelQ[101];
 				toc.header = header;
-				toc.entries = new JadSubchannelQ[101];
 
 				for (int i = 0; i < d.RawTOCEntries.Count; i++)
 				{
 					var entry = d.RawTOCEntries[i];
 
-					toc.entries[i] = new JadSubchannelQ
+					tocEntries[i] = new JadSubchannelQ
 					{
 						q_index = entry.QData.q_index.BCDValue,
 						q_apTimestamp = new JadTimestamp
@@ -111,27 +111,31 @@ namespace JadHammer.API
 					throw new ApplicationException("LibJad Error: jadstd_OpenStdio: " + ((JadStatus)jadErrStatus).ToString());
 
 				// JadCreationParams
-				JadCreationParams jcp = new JadCreationParams
+				fixed (JadSubchannelQ* pTocEntries = &tocEntries[0])
 				{
-					toc = toc,
-					numSectors = numSectors,
-					allocator = allocator,
-					callback = Marshal.GetFunctionPointerForDelegate(SectorReadCallback)
-				};
+					toc.entries = pTocEntries;
+					JadCreationParams jcp = new JadCreationParams
+					{
+						toc = &toc,
+						numSectors = numSectors,
+						allocator = &allocator,
+						callback = Marshal.GetFunctionPointerForDelegate(SectorReadCallback)
+					};
 
-				// context
-				JadContext context = new JadContext();
+					// context
+					JadContext context = new JadContext();
 
-				jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);	// context is not being updated at all with this
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus) jadErrStatus).ToString());
+					jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator); // context is not being updated at all with this
+					if (jadErrStatus != 0)
+						throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus)jadErrStatus).ToString());
 
-				// dump
-				// the following currently throws a:
-				// "System.AccessViolationException: 'Attempted to read or write protected memory. This is often an indication that other memory is corrupt.'"
-				jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
-				if (jadErrStatus != 0)
-					throw new ApplicationException("LibJad Error: jadDump: " + ((JadStatus) jadErrStatus).ToString());
+					// dump
+					// the following currently throws a:
+					// "System.AccessViolationException: 'Attempted to read or write protected memory. This is often an indication that other memory is corrupt.'"
+					jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
+					if (jadErrStatus != 0)
+						throw new ApplicationException("LibJad Error: jadDump: " + ((JadStatus)jadErrStatus).ToString());
+				}
 
 				// close
 				jadErrStatus = LibJad.jadstd_CloseStdio(ref stream);
