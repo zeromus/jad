@@ -60,4 +60,11 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy /y $(SolutionDir)debug\libjad\jad.dll $(OutDir)</PostBuildEvent>
+  </PropertyGroup>
 </Project>
