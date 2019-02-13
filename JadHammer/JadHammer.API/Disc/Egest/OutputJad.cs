@@ -99,6 +99,12 @@ namespace JadHammer.API
 				if (jadErrStatus != 0)
 					throw new ApplicationException("LibJad Error: jadstd_OpenAllocator: " + ((JadStatus)jadErrStatus).ToString());
 
+				// jadstream
+				JadStream stream = new JadStream();
+				jadErrStatus = LibJad.jadstd_OpenStdio(ref stream, FilePath, "wb");
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadstd_OpenStdio: " + ((JadStatus)jadErrStatus).ToString());
+
 				// JadCreationParams
 				JadCreationParams jcp = new JadCreationParams
 				{
@@ -110,17 +116,32 @@ namespace JadHammer.API
 
 				// context
 				JadContext context = new JadContext();
+
+				// copying jcp manually to context because jadCreate doesnt appear to do this for some reason??
+				context.allocator = allocator;
+				context.stream = stream;
+				context.createParams = jcp;
+				context.numSectors = (uint)jcp.numSectors;
+
 				jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);
 				if (jadErrStatus != 0)
 					throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus) jadErrStatus).ToString());
 
-				// jadstream
-				JadStream stream = new JadStream();
-				
 				// dump
+				// the following currently throws a:
+				// "System.AccessViolationException: 'Attempted to read or write protected memory. This is often an indication that other memory is corrupt.'"
 				jadErrStatus = LibJad.jadDump(ref context, ref stream, 0);
 				if (jadErrStatus != 0)
 					throw new ApplicationException("LibJad Error: jadDump: " + ((JadStatus) jadErrStatus).ToString());
+
+				// close
+				jadErrStatus = LibJad.jadstd_CloseStdio(ref stream);
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadstd_CloseStdio: " + ((JadStatus)jadErrStatus).ToString());
+
+				jadErrStatus = LibJad.jadstd_CloseAllocator(ref allocator);
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadstd_CloseAllocator: " + ((JadStatus)jadErrStatus).ToString());
 
 				return true;
 			}
