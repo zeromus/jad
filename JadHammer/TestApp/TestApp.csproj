@@ -66,6 +66,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy /y $(SolutionDir)debug\libjad\jad.dll $(OutDir)</PostBuildEvent>
+    <PostBuildEvent>copy /y $(SolutionDir)debug\libjad\jad.dll $(OutDir)
+copy /y $(SolutionDir)debug\libjad\jad.pdb $(OutDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>

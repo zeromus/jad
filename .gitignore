@@ -12,4 +12,5 @@
 /JadHammer/output
 /JadHammer/**/bin/
 /JadHammer/**/obj/
+/JadHammer/**/Debug/
 
