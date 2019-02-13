@@ -120,6 +120,14 @@ namespace JadHammer.API
 			return sb.ToString();
 		}
 
+		public void Reset()
+		{
+			_firstLine = true;
+			Console.WriteLine();
+			_firstLine = true;
+			Debug.WriteLine("");
+		}
+
 		public void Dispose()
 		{
 			_stopWatch.Stop();

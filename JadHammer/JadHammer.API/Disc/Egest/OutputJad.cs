@@ -183,6 +183,7 @@ namespace JadHammer.API
 				if (jadErrStatus != LibJad.JAD_OK)
 					throw new ApplicationException("LibJad Error: jadstd_CloseAllocator: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
 
+				Progress.Reset();
 				return true;
 			}
 			catch (Exception e)
@@ -203,8 +204,6 @@ namespace JadHammer.API
 
 			// read sector callback
 			SectorReadCallback = new JadReadCallbackDelegate(MyJadCreateReadCallback);
-
-			Progress.HeaderText = IsJac ? "Dumping compressed JAC sectors:" : "Dumping raw JAD sectors:";
 		}
 
 		/// <summary>
@@ -226,6 +225,8 @@ namespace JadHammer.API
 		/// <param name="subCodeBuffer"></param>
 		int MyJadCreateReadCallback(IntPtr opaque, int sectorNumber, IntPtr* sectorBuffer, IntPtr* subCodeBuffer)
 		{
+			Progress.HeaderText = IsJac ? "Dumping compressed JAC sectors:" : "Dumping raw JAD sectors:";
+
 			byte[] buf2448 = new byte[2448];
 			DSR.ReadLBA_2448(sectorNumber, buf2448, 0);
 			Array.Copy(buf2448, SectorPinned.Data, 2352);
