@@ -91,7 +91,12 @@ namespace JadHammer.API
 					};
 				}
 				
-				int numSectors = d.Session1.LeadoutLBA;
+				uint numSectors = (uint)d.Session1.LeadoutLBA;
+
+				// static init
+				jadErrStatus = LibJad.jadStaticInit();
+				if (jadErrStatus != 0)
+					throw new ApplicationException("LibJad Error: jadStaticInit: " + ((JadStatus)jadErrStatus).ToString());
 
 				// allocator
 				JadAllocator allocator = new JadAllocator();
@@ -117,13 +122,7 @@ namespace JadHammer.API
 				// context
 				JadContext context = new JadContext();
 
-				// copying jcp manually to context because jadCreate doesnt appear to do this for some reason??
-				context.allocator = allocator;
-				context.stream = stream;
-				context.createParams = jcp;
-				context.numSectors = (uint)jcp.numSectors;
-
-				jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);
+				jadErrStatus = LibJad.jadCreate(ref context, ref jcp, ref allocator);	// context is not being updated at all with this
 				if (jadErrStatus != 0)
 					throw new ApplicationException("LibJad Error: jadCreate: " + ((JadStatus) jadErrStatus).ToString());
 

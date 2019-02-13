@@ -32,7 +32,7 @@ namespace TestApp
 
 			Console.ReadKey();
 
-		/*
+		
 			var a = LibJad.jadStaticInit();
 			//var b = LibJad.jadstd_OpenStdio(ref jStream, "test.jad", "rb");
 
@@ -56,7 +56,7 @@ namespace TestApp
 			}
 
 			var c = LibJad.jadCreate(ref jContext, ref jCreationParams, ref jAllocator);
-			*/
+			
 			Console.ReadKey();
 		}
 	}

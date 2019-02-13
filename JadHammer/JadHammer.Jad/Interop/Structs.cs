@@ -122,10 +122,10 @@ namespace JadHammer.Jad
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct JadCreationParams
 	{
+		public IntPtr opaque;
 		public JadTOC toc;
 		public JadAllocator allocator;
-		public int numSectors;
-		//[MarshalAs(UnmanagedType.LPStruct)]
+		public uint numSectors;
 		public IntPtr callback;
 	}
 
