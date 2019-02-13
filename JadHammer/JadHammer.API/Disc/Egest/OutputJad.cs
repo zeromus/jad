@@ -15,6 +15,8 @@ namespace JadHammer.API
 	{
 		private DiscSectorReader DSR { get; set; }
 
+		public ProgressReporter Progress = new ProgressReporter();
+
 		/// <summary>
 		/// Signs whether the output file should be a compressed JAC (or not)
 		/// </summary>
@@ -73,6 +75,8 @@ namespace JadHammer.API
 		/// </summary>
 		private PinnedBuffer SubcodePinned;
 
+		private uint numSectors = 0;
+
 		/// <summary>
 		/// Attempts to write the mounted disk out to the specified format
 		/// </summary>
@@ -125,7 +129,7 @@ namespace JadHammer.API
 					};
 				}
 				
-				uint numSectors = (uint)d.Session1.LeadoutLBA;
+				numSectors = (uint)d.Session1.LeadoutLBA;
 
 				// static init
 				jadErrStatus = LibJad.jadStaticInit();
@@ -199,6 +203,8 @@ namespace JadHammer.API
 
 			// read sector callback
 			SectorReadCallback = new JadReadCallbackDelegate(MyJadCreateReadCallback);
+
+			Progress.HeaderText = IsJac ? "Dumping compressed JAC sectors:" : "Dumping raw JAD sectors:";
 		}
 
 		/// <summary>
@@ -227,6 +233,8 @@ namespace JadHammer.API
 
 			*sectorBuffer = SectorPinned.Ptr;
 			*subCodeBuffer = SubcodePinned.Ptr;
+
+			Progress.SignalProgress(0, numSectors, (uint) sectorNumber);
 
 			return 0;
 		}
