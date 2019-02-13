@@ -101,8 +101,8 @@ namespace JadHammer.Jad
 		public byte q_tno;
 		public byte q_index;
 		public byte zero;
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-		public byte[] padding;
+		public byte padding1;
+		public byte padding2;
 	}
 
 	/// <summary>

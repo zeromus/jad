@@ -52,7 +52,8 @@ namespace JadHammer.API
 							SEC = entry.QData.sec.BCDValue,
 							_padding = 0 // what is this?
 						},
-						padding = new byte[2], // again, vas ist das??
+						padding1 = 0,
+						padding2 = 0,
 						q_crc = entry.QData.q_crc,
 						q_tno = entry.QData.q_tno.BCDValue,
 						q_status = (byte)(entry.QData.ADR + ((int)entry.QData.CONTROL << 4)),
