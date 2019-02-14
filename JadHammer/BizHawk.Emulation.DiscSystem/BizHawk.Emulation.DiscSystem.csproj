@@ -40,6 +40,10 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="JadHammer.Jad, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\output\JadHammer.Jad.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -61,11 +65,13 @@
     <Compile Include="DiscDecoding.cs" />
     <Compile Include="DiscExceptions.cs" />
     <Compile Include="DiscFormats\Blobs\Blob_ECM.cs" />
+    <Compile Include="DiscFormats\Blobs\Blob_JadFile.cs" />
     <Compile Include="DiscFormats\Blobs\Blob_RawFile.cs" />
     <Compile Include="DiscFormats\Blobs\Blob_WaveFile.cs" />
     <Compile Include="DiscFormats\Blobs\Blob_ZeroPadAdapter.cs" />
     <Compile Include="DiscFormats\Blobs\IBlob.cs" />
     <Compile Include="DiscFormats\Blobs\RiffMaster.cs" />
+    <Compile Include="DiscFormats\JAD_format.cs" />
     <Compile Include="DiscFormats\MDS_Format.cs" />
     <Compile Include="DiscFormats\CCD_format.cs" />
     <Compile Include="DiscFormats\CUE\CueFileResolver.cs" />

@@ -192,6 +192,11 @@ namespace BizHawk.Emulation.DiscSystem
                 MDS_Format mdsLoader = new MDS_Format();
                 OUT_Disc = mdsLoader.LoadMDSToDisc(IN_FromPath, IN_DiscMountPolicy);
             }
+			else if (ext == ".jad")
+			{
+				JAD_Format jadLoader = new JAD_Format();
+				OUT_Disc = jadLoader.LoadJADToDisc(IN_FromPath, IN_DiscMountPolicy);
+			}
 
 
 		DONE:
