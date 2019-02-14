@@ -18,11 +18,11 @@ namespace TestApp
 		static unsafe void Main(string[] args)
 		{
 			string testCue = @"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).cue";
-			var discObj = BaseDisc.IngestDisc(testCue);
-			discObj.EgestDisc(@"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).jad",
-				OutputDiscType.JAD);
-			discObj.EgestDisc(@"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).jac",
-				OutputDiscType.JAC);
+			//var discObj = BaseDisc.IngestDisc(testCue);
+			//discObj.EgestDisc(@"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).jad",
+				//OutputDiscType.JAD);
+			//discObj.EgestDisc(@"G:\_Emulation\PSX\iso\Speedball 2100 (USA)\Speedball 2100 (USA).jac",
+				//OutputDiscType.JAC);
 
 			string testCcd = @"G:\_Emulation\PSX\iso\Resident Evil - Director's Cut - Dual Shock Ver. (USA)\Resident Evil - Director's Cut - Dual Shock Ver. (USA).ccd";
 			//var discObj2 = BaseDisc.IngestDisc(testCcd);
@@ -32,10 +32,13 @@ namespace TestApp
 			//discObj3.EgestDisc(@"G:\_Emulation\PSX\iso\LEGORACERS.jac", OutputDiscType.JAC);
 
 			string testOther = @"G:\_Emulation\PCFX\Games\Super Power League FX.cue";// @"D:\isos\psx\fft.cue";
-			var discObj4 = BaseDisc.IngestDisc(testOther);
+			//var discObj4 = BaseDisc.IngestDisc(testOther);
 			//discObj4.EgestDisc(@"D:\isos\psx\fft.jad", OutputDiscType.JAD);
 			//discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.jad", OutputDiscType.JAD);
-			discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.jac", OutputDiscType.JAC);
+			//discObj4.EgestDisc(@"G:\_Emulation\PCFX\Games\SPLFX.jac", OutputDiscType.JAC);
+
+			string testJad = @"G:\_Emulation\PCFX\Games\SPLFX.jad";
+			var discObj5 = BaseDisc.IngestDisc(testJad);
 
 			Console.ReadKey();
 

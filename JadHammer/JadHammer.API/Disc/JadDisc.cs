@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
+using JadHammer.Jad;
 
 namespace JadHammer.API
 {
@@ -20,7 +22,45 @@ namespace JadHammer.API
 		/// <returns></returns>
 		protected override bool _LoadDisc()
 		{
-			throw new NotImplementedException("JAD loading not yet implemented");
+			// basic test to verify that JadHammer can use libjad.Open() without error (although there is currently not much in libjad.open)
+			try
+			{
+				int jadErrStatus = 0;
+
+				// create the new jadStream
+				using (var jsh = new JadStreamHandler(FilePath))
+				{
+					jsh.Init();
+
+					// static init
+					jadErrStatus = LibJad.jadStaticInit();
+					if (jadErrStatus != LibJad.JAD_OK)
+						throw new ApplicationException("LibJad Error: jadStaticInit: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
+
+					// allocator
+					JadAllocator allocator = new JadAllocator();
+					jadErrStatus = LibJad.jadstd_OpenAllocator(ref allocator);
+					if (jadErrStatus != LibJad.JAD_OK)
+						throw new ApplicationException("LibJad Error: jadstd_OpenAllocator: " + Enum.GetName(typeof(JadStatus), jadErrStatus));
+
+					// context
+					JadContext context = new JadContext
+					{
+						allocator = allocator,
+						stream = jsh.JStream
+					};
+
+					// open
+					jadErrStatus = LibJad.jadOpen(ref context, ref jsh.JStream, ref allocator);		// appears to work for what its worth
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine(e);
+				return false;
+			}
+
+			return true;
 		}
 
 		/// <summary>
